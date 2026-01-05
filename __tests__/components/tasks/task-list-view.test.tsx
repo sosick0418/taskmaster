@@ -20,6 +20,25 @@ vi.mock("sonner", () => ({
   },
 }))
 
+// Mock the animated checkbox and confetti
+vi.mock("@/components/shared/animated-checkbox", () => ({
+  CircularCheckbox: ({ checked, onChange }: { checked: boolean; onChange: () => void }) => (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      onClick={onChange}
+      data-testid="circular-checkbox"
+    >
+      {checked ? "✓" : ""}
+    </button>
+  ),
+}))
+
+vi.mock("@/components/shared/confetti", () => ({
+  celebrateTaskComplete: vi.fn(),
+}))
+
 const mockTasks: Task[] = [
   {
     id: "1",

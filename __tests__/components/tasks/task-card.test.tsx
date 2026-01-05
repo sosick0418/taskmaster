@@ -1,7 +1,26 @@
-import { describe, it, expect, vi } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
 import { TaskCard } from "@/components/tasks/task-card"
 import type { Task } from "@/types/task"
+
+// Mock the animated checkbox and confetti
+vi.mock("@/components/shared/animated-checkbox", () => ({
+  CircularCheckbox: ({ checked, onChange }: { checked: boolean; onChange: () => void }) => (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      onClick={onChange}
+      data-testid="circular-checkbox"
+    >
+      {checked ? "✓" : ""}
+    </button>
+  ),
+}))
+
+vi.mock("@/components/shared/confetti", () => ({
+  celebrateTaskComplete: vi.fn(),
+}))
 
 const mockTask: Task = {
   id: "1",
@@ -81,6 +100,6 @@ describe("TaskCard", () => {
     const completedTask = { ...mockTask, isCompleted: true, status: "DONE" as const }
     render(<TaskCard task={completedTask} {...mockHandlers} />)
     const checkbox = screen.getByRole("checkbox")
-    expect(checkbox).toHaveAttribute("data-state", "checked")
+    expect(checkbox).toHaveAttribute("aria-checked", "true")
   })
 })

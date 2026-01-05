@@ -1,14 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { format, formatDistanceToNow, isPast, isToday, isTomorrow } from "date-fns"
-import { Calendar, Pencil, Trash2, Check, GripVertical } from "lucide-react"
+import { Calendar, Pencil, Trash2, GripVertical } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PriorityBadge } from "./priority-badge"
 import type { Priority } from "@/lib/validations/task"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { CircularCheckbox } from "@/components/shared/animated-checkbox"
+import { celebrateTaskComplete } from "@/components/shared/confetti"
 import {
   Tooltip,
   TooltipContent,
@@ -58,6 +59,14 @@ export function TaskCard({
 
   const dueInfo = task.dueDate ? formatDueDate(new Date(task.dueDate)) : null
 
+  const handleToggleComplete = useCallback(() => {
+    // Fire confetti only when completing (not uncompleting)
+    if (!task.isCompleted) {
+      celebrateTaskComplete()
+    }
+    onToggleComplete(task.id)
+  }, [task.isCompleted, task.id, onToggleComplete])
+
   return (
     <motion.div
       layout
@@ -99,20 +108,12 @@ export function TaskCard({
           </div>
         )}
 
-        {/* Checkbox */}
+        {/* Animated Checkbox */}
         <div className="mt-0.5">
-          <motion.div whileTap={{ scale: 0.9 }}>
-            <Checkbox
-              checked={task.isCompleted}
-              onCheckedChange={() => onToggleComplete(task.id)}
-              className={cn(
-                "h-5 w-5 rounded-md border-2 transition-all duration-200",
-                task.isCompleted
-                  ? "border-emerald-500 bg-emerald-500 text-white"
-                  : "border-white/20 hover:border-white/40"
-              )}
-            />
-          </motion.div>
+          <CircularCheckbox
+            checked={task.isCompleted}
+            onChange={handleToggleComplete}
+          />
         </div>
 
         {/* Content */}

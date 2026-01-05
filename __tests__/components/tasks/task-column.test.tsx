@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
 import { TaskColumn } from "@/components/tasks/task-column"
 import type { Task } from "@/types/task"
@@ -19,6 +19,33 @@ vi.mock("@dnd-kit/sortable", () => ({
     transition: undefined,
     isDragging: false,
   })),
+}))
+
+vi.mock("@dnd-kit/utilities", () => ({
+  CSS: {
+    Transform: {
+      toString: vi.fn(() => ""),
+    },
+  },
+}))
+
+// Mock the animated checkbox and confetti
+vi.mock("@/components/shared/animated-checkbox", () => ({
+  CircularCheckbox: ({ checked, onChange }: { checked: boolean; onChange: () => void }) => (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      onClick={onChange}
+      data-testid="circular-checkbox"
+    >
+      {checked ? "✓" : ""}
+    </button>
+  ),
+}))
+
+vi.mock("@/components/shared/confetti", () => ({
+  celebrateTaskComplete: vi.fn(),
 }))
 
 const mockTasks: Task[] = [
