@@ -1,11 +1,13 @@
 "use client"
 
-import { useState, useTransition, useOptimistic } from "react"
+import { useState, useTransition, useOptimistic, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus, CheckSquare } from "lucide-react"
 import { toast } from "sonner"
 import { TaskCard } from "./task-card"
 import { TaskForm } from "./task-form"
+import { TaskFilters, type SortOption } from "./task-filters"
+import { ViewToggle, type ViewMode } from "./view-toggle"
 import { Button } from "@/components/ui/button"
 import {
   createTask,
@@ -37,11 +39,25 @@ interface TaskListViewProps {
   userName: string | undefined
 }
 
+const priorityOrder: Record<Priority, number> = {
+  URGENT: 0,
+  HIGH: 1,
+  MEDIUM: 2,
+  LOW: 3,
+}
+
 export function TaskListView({ initialTasks, stats, userName }: TaskListViewProps) {
   const [tasks, setTasks] = useState(initialTasks)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  // Filter and view state
+  const [viewMode, setViewMode] = useState<ViewMode>("list")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<TaskStatus[]>(["TODO", "IN_PROGRESS", "DONE"])
+  const [priorityFilter, setPriorityFilter] = useState<Priority[]>(["LOW", "MEDIUM", "HIGH", "URGENT"])
+  const [sortBy, setSortBy] = useState<SortOption>("newest")
 
   // Optimistic updates for better UX
   const [optimisticTasks, addOptimisticTask] = useOptimistic(
@@ -61,6 +77,51 @@ export function TaskListView({ initialTasks, stats, userName }: TaskListViewProp
       }
     }
   )
+
+  // Filtered and sorted tasks
+  const filteredTasks = useMemo(() => {
+    let result = optimisticTasks
+
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      result = result.filter(
+        (task) =>
+          task.title.toLowerCase().includes(query) ||
+          task.description?.toLowerCase().includes(query) ||
+          task.tags.some((tag) => tag.name.toLowerCase().includes(query))
+      )
+    }
+
+    // Apply status filter
+    result = result.filter((task) => statusFilter.includes(task.status))
+
+    // Apply priority filter
+    result = result.filter((task) => priorityFilter.includes(task.priority))
+
+    // Apply sorting
+    result = [...result].sort((a, b) => {
+      switch (sortBy) {
+        case "newest":
+          return b.order - a.order
+        case "oldest":
+          return a.order - b.order
+        case "priority":
+          return priorityOrder[a.priority] - priorityOrder[b.priority]
+        case "dueDate":
+          if (!a.dueDate && !b.dueDate) return 0
+          if (!a.dueDate) return 1
+          if (!b.dueDate) return -1
+          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+        case "title":
+          return a.title.localeCompare(b.title)
+        default:
+          return 0
+      }
+    })
+
+    return result
+  }, [optimisticTasks, searchQuery, statusFilter, priorityFilter, sortBy])
 
   const handleCreateOrUpdate = async (data: TaskFormData) => {
     const { id: taskId, ...restData } = data
@@ -152,10 +213,13 @@ export function TaskListView({ initialTasks, stats, userName }: TaskListViewProp
     { label: "Completed", value: stats.completed, gradient: "from-fuchsia-500 to-pink-600" },
   ]
 
+  const showingCount = filteredTasks.length
+  const totalCount = optimisticTasks.length
+
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">
             Welcome back,{" "}
@@ -163,16 +227,19 @@ export function TaskListView({ initialTasks, stats, userName }: TaskListViewProp
           </h1>
           <p className="text-white/50">Here&apos;s what&apos;s on your plate today.</p>
         </div>
-        <Button
-          onClick={() => {
-            setEditingTask(null)
-            setIsFormOpen(true)
-          }}
-          className="bg-gradient-to-r from-violet-500 to-cyan-500 text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          New Task
-        </Button>
+        <div className="flex items-center gap-3">
+          <ViewToggle view={viewMode} onViewChange={setViewMode} />
+          <Button
+            onClick={() => {
+              setEditingTask(null)
+              setIsFormOpen(true)
+            }}
+            className="bg-gradient-to-r from-violet-500 to-cyan-500 text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            New Task
+          </Button>
+        </div>
       </div>
 
       {/* Stats cards */}
@@ -198,11 +265,34 @@ export function TaskListView({ initialTasks, stats, userName }: TaskListViewProp
         ))}
       </div>
 
+      {/* Filters */}
+      <TaskFilters
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        priorityFilter={priorityFilter}
+        onPriorityFilterChange={setPriorityFilter}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+      />
+
+      {/* Results count */}
+      {(searchQuery || statusFilter.length < 3 || priorityFilter.length < 4) && (
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-sm text-white/40"
+        >
+          Showing {showingCount} of {totalCount} tasks
+        </motion.p>
+      )}
+
       {/* Task list */}
-      {optimisticTasks.length > 0 ? (
+      {filteredTasks.length > 0 ? (
         <div className="space-y-3">
           <AnimatePresence mode="popLayout">
-            {optimisticTasks.map((task) => (
+            {filteredTasks.map((task) => (
               <TaskCard
                 key={task.id}
                 task={task}
@@ -213,6 +303,31 @@ export function TaskListView({ initialTasks, stats, userName }: TaskListViewProp
             ))}
           </AnimatePresence>
         </div>
+      ) : optimisticTasks.length > 0 ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/[0.12] bg-white/[0.01] py-16"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.04]">
+            <CheckSquare className="h-6 w-6 text-white/30" />
+          </div>
+          <h3 className="mt-4 text-lg font-medium text-white/70">No matching tasks</h3>
+          <p className="mt-1 text-sm text-white/40">
+            Try adjusting your filters or search query
+          </p>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setSearchQuery("")
+              setStatusFilter(["TODO", "IN_PROGRESS", "DONE"])
+              setPriorityFilter(["LOW", "MEDIUM", "HIGH", "URGENT"])
+            }}
+            className="mt-4 text-white/60 hover:text-white"
+          >
+            Clear filters
+          </Button>
+        </motion.div>
       ) : (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
