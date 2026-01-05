@@ -1,3 +1,6 @@
 export { PriorityBadge } from "./priority-badge"
 export { TaskCard } from "./task-card"
 export { TaskForm } from "./task-form"
+export { TaskListView } from "./task-list-view"
+export { TaskFilters, type SortOption } from "./task-filters"
+export { ViewToggle, type ViewMode } from "./view-toggle"
