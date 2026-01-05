@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useOptimistic, useMemo } from "react"
+import { useState, useTransition, useOptimistic, useMemo, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus, CheckSquare } from "lucide-react"
 import { toast } from "sonner"
@@ -8,12 +8,14 @@ import { TaskCard } from "./task-card"
 import { TaskForm } from "./task-form"
 import { TaskFilters, type SortOption } from "./task-filters"
 import { ViewToggle, type ViewMode } from "./view-toggle"
+import { TaskBoard } from "./task-board"
 import { Button } from "@/components/ui/button"
 import {
   createTask,
   updateTask,
   deleteTask,
   toggleTaskComplete,
+  reorderTasks,
 } from "@/actions/tasks"
 import type { Priority, TaskStatus } from "@/lib/validations/task"
 import type { Task } from "@/types/task"
@@ -50,6 +52,7 @@ export function TaskListView({ initialTasks, stats, userName }: TaskListViewProp
   const [tasks, setTasks] = useState(initialTasks)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [defaultStatus, setDefaultStatus] = useState<TaskStatus>("TODO")
   const [isPending, startTransition] = useTransition()
 
   // Filter and view state
@@ -62,7 +65,7 @@ export function TaskListView({ initialTasks, stats, userName }: TaskListViewProp
   // Optimistic updates for better UX
   const [optimisticTasks, addOptimisticTask] = useOptimistic(
     tasks,
-    (state, action: { type: string; task?: Task; id?: string }) => {
+    (state, action: { type: string; task?: Task; id?: string; status?: TaskStatus; order?: number }) => {
       switch (action.type) {
         case "toggle":
           return state.map((t) =>
@@ -72,6 +75,12 @@ export function TaskListView({ initialTasks, stats, userName }: TaskListViewProp
           )
         case "delete":
           return state.filter((t) => t.id !== action.id)
+        case "move":
+          return state.map((t) =>
+            t.id === action.id
+              ? { ...t, status: action.status!, order: action.order! }
+              : t
+          )
         default:
           return state
       }
@@ -93,35 +102,39 @@ export function TaskListView({ initialTasks, stats, userName }: TaskListViewProp
       )
     }
 
-    // Apply status filter
-    result = result.filter((task) => statusFilter.includes(task.status))
+    // Apply status filter (only for list view)
+    if (viewMode === "list") {
+      result = result.filter((task) => statusFilter.includes(task.status))
+    }
 
     // Apply priority filter
     result = result.filter((task) => priorityFilter.includes(task.priority))
 
-    // Apply sorting
-    result = [...result].sort((a, b) => {
-      switch (sortBy) {
-        case "newest":
-          return b.order - a.order
-        case "oldest":
-          return a.order - b.order
-        case "priority":
-          return priorityOrder[a.priority] - priorityOrder[b.priority]
-        case "dueDate":
-          if (!a.dueDate && !b.dueDate) return 0
-          if (!a.dueDate) return 1
-          if (!b.dueDate) return -1
-          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
-        case "title":
-          return a.title.localeCompare(b.title)
-        default:
-          return 0
-      }
-    })
+    // Apply sorting (only for list view)
+    if (viewMode === "list") {
+      result = [...result].sort((a, b) => {
+        switch (sortBy) {
+          case "newest":
+            return b.order - a.order
+          case "oldest":
+            return a.order - b.order
+          case "priority":
+            return priorityOrder[a.priority] - priorityOrder[b.priority]
+          case "dueDate":
+            if (!a.dueDate && !b.dueDate) return 0
+            if (!a.dueDate) return 1
+            if (!b.dueDate) return -1
+            return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+          case "title":
+            return a.title.localeCompare(b.title)
+          default:
+            return 0
+        }
+      })
+    }
 
     return result
-  }, [optimisticTasks, searchQuery, statusFilter, priorityFilter, sortBy])
+  }, [optimisticTasks, searchQuery, statusFilter, priorityFilter, sortBy, viewMode])
 
   const handleCreateOrUpdate = async (data: TaskFormData) => {
     const { id: taskId, ...restData } = data
@@ -160,6 +173,7 @@ export function TaskListView({ initialTasks, stats, userName }: TaskListViewProp
       }
     }
     setEditingTask(null)
+    setDefaultStatus("TODO")
   }
 
   const handleToggleComplete = async (id: string) => {
@@ -207,6 +221,59 @@ export function TaskListView({ initialTasks, stats, userName }: TaskListViewProp
     setIsFormOpen(true)
   }
 
+  const handleAddTask = (status: TaskStatus) => {
+    setDefaultStatus(status)
+    setEditingTask(null)
+    setIsFormOpen(true)
+  }
+
+  const handleTaskMove = useCallback(async (taskId: string, newStatus: TaskStatus, newOrder: number) => {
+    // Optimistic update
+    startTransition(async () => {
+      addOptimisticTask({ type: "move", id: taskId, status: newStatus, order: newOrder })
+
+      // Update local state
+      setTasks((prev) => {
+        const task = prev.find((t) => t.id === taskId)
+        if (!task) return prev
+
+        // Get tasks in the target status column
+        const tasksInColumn = prev
+          .filter((t) => t.status === newStatus && t.id !== taskId)
+          .sort((a, b) => a.order - b.order)
+
+        // Insert the moved task at the new position
+        tasksInColumn.splice(newOrder, 0, { ...task, status: newStatus })
+
+        // Update orders for all tasks in the column
+        const updatedTasks = tasksInColumn.map((t, index) => ({
+          ...t,
+          order: index,
+        }))
+
+        // Replace tasks in the column with updated ones
+        return prev.map((t) => {
+          if (t.id === taskId) {
+            return { ...t, status: newStatus, order: newOrder }
+          }
+          const updated = updatedTasks.find((ut) => ut.id === t.id)
+          return updated || t
+        })
+      })
+
+      // Persist to server
+      const result = await reorderTasks({
+        tasks: [{ id: taskId, order: newOrder, status: newStatus }],
+      })
+
+      if (!result.success) {
+        toast.error(result.error)
+        // Revert on error - reload page
+        window.location.reload()
+      }
+    })
+  }, [addOptimisticTask, startTransition])
+
   const statCards = [
     { label: "Total Tasks", value: stats.total, gradient: "from-violet-500 to-purple-600" },
     { label: "In Progress", value: stats.inProgress, gradient: "from-cyan-500 to-blue-600" },
@@ -230,10 +297,7 @@ export function TaskListView({ initialTasks, stats, userName }: TaskListViewProp
         <div className="flex items-center gap-3">
           <ViewToggle view={viewMode} onViewChange={setViewMode} />
           <Button
-            onClick={() => {
-              setEditingTask(null)
-              setIsFormOpen(true)
-            }}
+            onClick={() => handleAddTask("TODO")}
             className="bg-gradient-to-r from-violet-500 to-cyan-500 text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40"
           >
             <Plus className="mr-2 h-4 w-4" />
@@ -265,20 +329,22 @@ export function TaskListView({ initialTasks, stats, userName }: TaskListViewProp
         ))}
       </div>
 
-      {/* Filters */}
-      <TaskFilters
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
-        priorityFilter={priorityFilter}
-        onPriorityFilterChange={setPriorityFilter}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-      />
+      {/* Filters - only show in list view */}
+      {viewMode === "list" && (
+        <TaskFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          priorityFilter={priorityFilter}
+          onPriorityFilterChange={setPriorityFilter}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+        />
+      )}
 
-      {/* Results count */}
-      {(searchQuery || statusFilter.length < 3 || priorityFilter.length < 4) && (
+      {/* Results count - only show in list view with filters */}
+      {viewMode === "list" && (searchQuery || statusFilter.length < 3 || priorityFilter.length < 4) && (
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -288,74 +354,88 @@ export function TaskListView({ initialTasks, stats, userName }: TaskListViewProp
         </motion.p>
       )}
 
-      {/* Task list */}
-      {filteredTasks.length > 0 ? (
-        <div className="space-y-3">
-          <AnimatePresence mode="popLayout">
-            {filteredTasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onToggleComplete={handleToggleComplete}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
-            ))}
-          </AnimatePresence>
-        </div>
-      ) : optimisticTasks.length > 0 ? (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/[0.12] bg-white/[0.01] py-16"
-        >
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.04]">
-            <CheckSquare className="h-6 w-6 text-white/30" />
-          </div>
-          <h3 className="mt-4 text-lg font-medium text-white/70">No matching tasks</h3>
-          <p className="mt-1 text-sm text-white/40">
-            Try adjusting your filters or search query
-          </p>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setSearchQuery("")
-              setStatusFilter(["TODO", "IN_PROGRESS", "DONE"])
-              setPriorityFilter(["LOW", "MEDIUM", "HIGH", "URGENT"])
-            }}
-            className="mt-4 text-white/60 hover:text-white"
-          >
-            Clear filters
-          </Button>
-        </motion.div>
+      {/* Board View */}
+      {viewMode === "board" ? (
+        <TaskBoard
+          tasks={filteredTasks}
+          onTaskMove={handleTaskMove}
+          onToggleComplete={handleToggleComplete}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onAddTask={handleAddTask}
+        />
       ) : (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/[0.12] bg-white/[0.01] py-20"
-        >
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/20 to-cyan-500/20">
-            <CheckSquare className="h-8 w-8 text-white/40" />
-          </div>
-          <h3 className="mt-4 text-lg font-medium text-white/80">No tasks yet</h3>
-          <p className="mt-1 text-sm text-white/40">
-            Create your first task to get started
-          </p>
-          <Button
-            onClick={() => setIsFormOpen(true)}
-            className="mt-6 bg-gradient-to-r from-violet-500 to-cyan-500 text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Create Task
-          </Button>
-        </motion.div>
+        /* List View */
+        <>
+          {filteredTasks.length > 0 ? (
+            <div className="space-y-3">
+              <AnimatePresence mode="popLayout">
+                {filteredTasks.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onToggleComplete={handleToggleComplete}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
+          ) : optimisticTasks.length > 0 ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/[0.12] bg-white/[0.01] py-16"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.04]">
+                <CheckSquare className="h-6 w-6 text-white/30" />
+              </div>
+              <h3 className="mt-4 text-lg font-medium text-white/70">No matching tasks</h3>
+              <p className="mt-1 text-sm text-white/40">
+                Try adjusting your filters or search query
+              </p>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setSearchQuery("")
+                  setStatusFilter(["TODO", "IN_PROGRESS", "DONE"])
+                  setPriorityFilter(["LOW", "MEDIUM", "HIGH", "URGENT"])
+                }}
+                className="mt-4 text-white/60 hover:text-white"
+              >
+                Clear filters
+              </Button>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/[0.12] bg-white/[0.01] py-20"
+            >
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/20 to-cyan-500/20">
+                <CheckSquare className="h-8 w-8 text-white/40" />
+              </div>
+              <h3 className="mt-4 text-lg font-medium text-white/80">No tasks yet</h3>
+              <p className="mt-1 text-sm text-white/40">
+                Create your first task to get started
+              </p>
+              <Button
+                onClick={() => handleAddTask("TODO")}
+                className="mt-6 bg-gradient-to-r from-violet-500 to-cyan-500 text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Create Task
+              </Button>
+            </motion.div>
+          )}
+        </>
       )}
 
       {/* Task form modal */}
       <TaskForm
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
-        task={editingTask}
+        task={editingTask ? editingTask : { status: defaultStatus } as any}
         onSubmit={handleCreateOrUpdate}
       />
     </div>

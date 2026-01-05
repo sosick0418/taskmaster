@@ -1,0 +1,161 @@
+"use client"
+
+import { useDroppable } from "@dnd-kit/core"
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable"
+import { motion } from "framer-motion"
+import { Plus, Circle, Clock, CheckCircle2 } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { SortableTaskCard } from "./sortable-task-card"
+import { Button } from "@/components/ui/button"
+import type { Task } from "@/types/task"
+import type { TaskStatus } from "@/lib/validations/task"
+
+interface TaskColumnProps {
+  id: TaskStatus
+  title: string
+  tasks: Task[]
+  onToggleComplete: (id: string) => void
+  onEdit: (task: Task) => void
+  onDelete: (id: string) => void
+  onAddTask: (status: TaskStatus) => void
+}
+
+const columnConfig: Record<
+  TaskStatus,
+  {
+    icon: typeof Circle
+    gradient: string
+    bgGradient: string
+    borderColor: string
+  }
+> = {
+  TODO: {
+    icon: Circle,
+    gradient: "from-slate-400 to-slate-500",
+    bgGradient: "from-slate-500/10 to-transparent",
+    borderColor: "border-slate-500/20",
+  },
+  IN_PROGRESS: {
+    icon: Clock,
+    gradient: "from-blue-400 to-cyan-500",
+    bgGradient: "from-blue-500/10 to-transparent",
+    borderColor: "border-blue-500/20",
+  },
+  DONE: {
+    icon: CheckCircle2,
+    gradient: "from-emerald-400 to-green-500",
+    bgGradient: "from-emerald-500/10 to-transparent",
+    borderColor: "border-emerald-500/20",
+  },
+}
+
+export function TaskColumn({
+  id,
+  title,
+  tasks,
+  onToggleComplete,
+  onEdit,
+  onDelete,
+  onAddTask,
+}: TaskColumnProps) {
+  const { setNodeRef, isOver } = useDroppable({
+    id,
+    data: {
+      type: "column",
+      status: id,
+    },
+  })
+
+  const config = columnConfig[id]
+  const Icon = config.icon
+  const taskIds = tasks.map((task) => task.id)
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "flex h-full flex-col rounded-2xl border bg-white/[0.01] backdrop-blur-sm transition-all duration-300",
+        config.borderColor,
+        isOver && "border-white/20 bg-white/[0.03] ring-1 ring-white/10"
+      )}
+    >
+      {/* Column Header */}
+      <div className="relative overflow-hidden rounded-t-2xl border-b border-white/[0.06] p-4">
+        {/* Background gradient */}
+        <div
+          className={cn(
+            "absolute inset-0 bg-gradient-to-br opacity-50",
+            config.bgGradient
+          )}
+        />
+
+        {/* Header content */}
+        <div className="relative flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div
+              className={cn(
+                "flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br",
+                config.gradient
+              )}
+            >
+              <Icon className="h-4 w-4 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-white">{title}</h3>
+              <p className="text-xs text-white/50">{tasks.length} tasks</p>
+            </div>
+          </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onAddTask(id)}
+            className="h-8 w-8 text-white/40 hover:bg-white/10 hover:text-white"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Task List */}
+      <div className="flex-1 overflow-y-auto p-3">
+        <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3">
+            {tasks.length > 0 ? (
+              tasks.map((task) => (
+                <SortableTaskCard
+                  key={task.id}
+                  task={task}
+                  onToggleComplete={onToggleComplete}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                />
+              ))
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/[0.08] py-8 text-center"
+              >
+                <Icon className="h-8 w-8 text-white/20" />
+                <p className="mt-2 text-sm text-white/30">No tasks</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onAddTask(id)}
+                  className="mt-2 text-white/40 hover:text-white"
+                >
+                  <Plus className="mr-1 h-3 w-3" />
+                  Add task
+                </Button>
+              </motion.div>
+            )}
+          </div>
+        </SortableContext>
+      </div>
+    </div>
+  )
+}

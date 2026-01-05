@@ -108,15 +108,16 @@ export function TaskForm({ open, onOpenChange, task, onSubmit }: TaskFormProps) 
   // Reset form when task changes
   useEffect(() => {
     if (task) {
+      const taskTags = task.tags?.map((t) => t.name) ?? []
       reset({
-        title: task.title,
+        title: task.title ?? "",
         description: task.description ?? "",
-        priority: task.priority,
+        priority: task.priority ?? "MEDIUM",
         status: task.status,
         dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
-        tags: task.tags.map((t) => t.name),
+        tags: taskTags,
       })
-      setTags(task.tags.map((t) => t.name))
+      setTags(taskTags)
     } else {
       reset({
         title: "",
