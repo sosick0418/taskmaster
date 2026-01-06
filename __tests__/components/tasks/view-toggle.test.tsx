@@ -18,13 +18,13 @@ describe("ViewToggle", () => {
   it("highlights list button when view is list", () => {
     render(<ViewToggle view="list" onViewChange={mockOnViewChange} />)
     const listButton = screen.getByRole("button", { name: /list/i })
-    expect(listButton).toHaveClass("text-white")
+    expect(listButton).toHaveClass("bg-violet-500/15", "text-foreground")
   })
 
   it("highlights board button when view is board", () => {
     render(<ViewToggle view="board" onViewChange={mockOnViewChange} />)
     const boardButton = screen.getByRole("button", { name: /board/i })
-    expect(boardButton).toHaveClass("text-white")
+    expect(boardButton).toHaveClass("bg-violet-500/15", "text-foreground")
   })
 
   it("calls onViewChange with list when list button clicked", () => {

@@ -25,6 +25,7 @@ interface TaskBoardProps {
   onEdit: (task: Task) => void
   onDelete: (id: string) => void
   onAddTask: (status: TaskStatus) => void
+  onClick?: (task: Task) => void
 }
 
 const columns: { id: TaskStatus; title: string }[] = [
@@ -40,6 +41,7 @@ export function TaskBoard({
   onEdit,
   onDelete,
   onAddTask,
+  onClick,
 }: TaskBoardProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null)
 
@@ -158,6 +160,7 @@ export function TaskBoard({
             onEdit={onEdit}
             onDelete={onDelete}
             onAddTask={onAddTask}
+            {...(onClick && { onClick })}
           />
         ))}
       </div>

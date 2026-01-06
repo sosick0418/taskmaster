@@ -5,11 +5,11 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  LayoutDashboard,
   CheckSquare,
   Settings,
   ChevronLeft,
   Sparkles,
+  BarChart3,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -17,16 +17,16 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 const navItems = [
   {
-    title: "Dashboard",
-    href: "/tasks",
-    icon: LayoutDashboard,
-    gradient: "from-violet-500 to-purple-600",
-  },
-  {
     title: "Tasks",
     href: "/tasks",
     icon: CheckSquare,
-    gradient: "from-cyan-500 to-blue-600",
+    gradient: "from-violet-500 to-cyan-600",
+  },
+  {
+    title: "Analytics",
+    href: "/analytics",
+    icon: BarChart3,
+    gradient: "from-emerald-500 to-green-600",
   },
   {
     title: "Settings",
@@ -51,14 +51,14 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         initial={false}
         animate={{ width: isCollapsed ? 72 : 240 }}
         transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        className="relative flex h-screen flex-col border-r border-white/[0.06] bg-black/40 backdrop-blur-2xl"
+        className="relative flex h-screen flex-col border-r border-border bg-background/80 backdrop-blur-2xl dark:bg-black/40"
       >
         {/* Gradient accent line */}
         <div className="absolute right-0 top-0 h-full w-px bg-gradient-to-b from-violet-500/50 via-transparent to-cyan-500/50" />
 
         {/* Logo */}
         <div className="flex h-16 items-center justify-between px-4">
-          <Link href="/tasks" className="flex items-center gap-3">
+          <Link href="/tasks" className="flex cursor-pointer items-center gap-3">
             <motion.div
               whileHover={{ rotate: 180 }}
               transition={{ duration: 0.5 }}
@@ -76,7 +76,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                   className="text-lg font-bold tracking-tight"
                 >
                   <span className="gradient-text">Task</span>
-                  <span className="text-white">master</span>
+                  <span className="text-foreground">master</span>
                 </motion.span>
               )}
             </AnimatePresence>
@@ -84,7 +84,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 px-3 py-4">
+        <nav className={cn("flex-1 space-y-1 py-4", isCollapsed ? "px-2" : "px-3")}>
           {navItems.map((item, index) => {
             const isActive = pathname === item.href
             const isHovered = hoveredItem === item.title
@@ -96,17 +96,18 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                     href={item.href}
                     onMouseEnter={() => setHoveredItem(item.title)}
                     onMouseLeave={() => setHoveredItem(null)}
-                    className="block"
+                    className="block cursor-pointer"
                   >
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
                       className={cn(
-                        "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-300",
+                        "group relative flex items-center gap-3 rounded-xl transition-all duration-300",
+                        isCollapsed ? "justify-center p-2" : "px-3 py-2.5",
                         isActive
-                          ? "bg-white/[0.08] text-white"
-                          : "text-white/60 hover:bg-white/[0.04] hover:text-white"
+                          ? "bg-violet-500/15 text-foreground"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                       )}
                     >
                       {/* Active indicator */}
@@ -141,13 +142,13 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                           "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors",
                           isActive
                             ? `bg-gradient-to-br ${item.gradient} shadow-lg`
-                            : "bg-white/[0.04] group-hover:bg-white/[0.08]"
+                            : "bg-muted/60 dark:bg-muted group-hover:bg-accent"
                         )}
                       >
                         <item.icon
                           className={cn(
                             "h-4.5 w-4.5 transition-colors",
-                            isActive ? "text-white" : "text-white/70 group-hover:text-white"
+                            isActive ? "text-white" : "text-muted-foreground group-hover:text-accent-foreground"
                           )}
                         />
                       </div>
@@ -178,13 +179,13 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         </nav>
 
         {/* Collapse toggle */}
-        <div className="border-t border-white/[0.06] p-3">
+        <div className="border-t border-border p-3">
           <Button
             variant="ghost"
             size="sm"
             onClick={onToggle}
             className={cn(
-              "w-full justify-center gap-2 text-white/60 hover:bg-white/[0.04] hover:text-white",
+              "w-full cursor-pointer justify-center gap-2 text-muted-foreground hover:bg-muted hover:text-foreground",
               !isCollapsed && "justify-start px-3"
             )}
           >

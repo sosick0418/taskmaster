@@ -7,25 +7,25 @@ import type { Priority } from "@/lib/validations/task"
 const priorityConfig = {
   LOW: {
     label: "Low",
-    className: "bg-slate-500/20 text-slate-300 border-slate-500/30",
+    className: "bg-slate-500/20 text-slate-600 dark:text-slate-300 border-slate-500/30",
     glowColor: "shadow-slate-500/20",
     dotColor: "bg-slate-400",
   },
   MEDIUM: {
     label: "Medium",
-    className: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+    className: "bg-blue-500/20 text-blue-600 dark:text-blue-300 border-blue-500/30",
     glowColor: "shadow-blue-500/25",
     dotColor: "bg-blue-400",
   },
   HIGH: {
     label: "High",
-    className: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+    className: "bg-amber-500/20 text-amber-600 dark:text-amber-300 border-amber-500/30",
     glowColor: "shadow-amber-500/25",
     dotColor: "bg-amber-400",
   },
   URGENT: {
     label: "Urgent",
-    className: "bg-red-500/20 text-red-300 border-red-500/30",
+    className: "bg-red-500/20 text-red-600 dark:text-red-300 border-red-500/30",
     glowColor: "shadow-red-500/30",
     dotColor: "bg-red-400",
   },

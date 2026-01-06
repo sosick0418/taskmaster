@@ -6,6 +6,7 @@ import { format, formatDistanceToNow, isPast, isToday, isTomorrow } from "date-f
 import { Calendar, Pencil, Trash2, GripVertical } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PriorityBadge } from "./priority-badge"
+import { SubtaskProgress } from "./subtask-progress"
 import type { Priority } from "@/lib/validations/task"
 import { Button } from "@/components/ui/button"
 import { CircularCheckbox } from "@/components/shared/animated-checkbox"
@@ -23,6 +24,7 @@ interface TaskCardProps {
   onToggleComplete: (id: string) => void
   onEdit: (task: Task) => void
   onDelete: (id: string) => void
+  onClick?: (task: Task) => void
   isDragging?: boolean
   dragHandleProps?: Record<string, unknown>
 }
@@ -52,10 +54,27 @@ export function TaskCard({
   onToggleComplete,
   onEdit,
   onDelete,
+  onClick,
   isDragging = false,
   dragHandleProps,
 }: TaskCardProps) {
   const [isHovered, setIsHovered] = useState(false)
+
+  const handleCardClick = useCallback(
+    (e: React.MouseEvent) => {
+      // Don't trigger if clicking on buttons, checkbox, or drag handle
+      const target = e.target as HTMLElement
+      if (
+        target.closest("button") ||
+        target.closest("[data-checkbox]") ||
+        target.closest("[data-drag-handle]")
+      ) {
+        return
+      }
+      onClick?.(task)
+    },
+    [onClick, task]
+  )
 
   const dueInfo = task.dueDate ? formatDueDate(new Date(task.dueDate)) : null
 
@@ -81,12 +100,14 @@ export function TaskCard({
       transition={{ duration: 0.2 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={handleCardClick}
       className={cn(
-        "group relative overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-sm",
+        "group relative overflow-hidden rounded-xl border border-border bg-card backdrop-blur-sm",
         "transition-all duration-300",
-        "hover:border-white/[0.12] hover:bg-white/[0.04]",
-        isDragging && "shadow-2xl shadow-black/50 border-white/[0.15]",
-        task.isCompleted && "opacity-60"
+        "hover:border-border/80 hover:bg-card/80",
+        isDragging && "shadow-2xl shadow-black/20 dark:shadow-black/50 border-primary/30",
+        task.isCompleted && "opacity-60",
+        onClick && "cursor-pointer"
       )}
     >
       {/* Priority gradient accent */}
@@ -102,14 +123,15 @@ export function TaskCard({
         {dragHandleProps && (
           <div
             {...dragHandleProps}
-            className="mt-1 cursor-grab text-white/20 hover:text-white/40 active:cursor-grabbing"
+            data-drag-handle
+            className="mt-1 cursor-grab text-muted-foreground/50 hover:text-muted-foreground active:cursor-grabbing"
           >
             <GripVertical className="h-4 w-4" />
           </div>
         )}
 
         {/* Animated Checkbox */}
-        <div className="mt-0.5">
+        <div className="mt-0.5" data-checkbox>
           <CircularCheckbox
             checked={task.isCompleted}
             onChange={handleToggleComplete}
@@ -122,17 +144,22 @@ export function TaskCard({
             <div className="flex-1">
               <h3
                 className={cn(
-                  "font-medium leading-tight transition-all duration-200",
-                  task.isCompleted && "text-white/50 line-through"
+                  "font-medium leading-tight text-foreground transition-all duration-200",
+                  task.isCompleted && "text-muted-foreground"
                 )}
               >
-                {task.title}
+                <span className={cn(
+                  "relative inline",
+                  task.isCompleted && "line-through decoration-emerald-500/70 decoration-2"
+                )}>
+                  {task.title}
+                </span>
               </h3>
               {task.description && (
                 <p
                   className={cn(
-                    "mt-1 text-sm text-white/50 line-clamp-2",
-                    task.isCompleted && "text-white/30"
+                    "mt-1 text-sm text-muted-foreground line-clamp-2",
+                    task.isCompleted && "text-muted-foreground/60"
                   )}
                 >
                   {task.description}
@@ -146,14 +173,19 @@ export function TaskCard({
 
           {/* Meta row */}
           <div className="mt-3 flex flex-wrap items-center gap-2">
+            {/* Subtask progress */}
+            {task.subtasks && task.subtasks.length > 0 && (
+              <SubtaskProgress subtasks={task.subtasks} />
+            )}
+
             {/* Due date */}
             {dueInfo && (
               <div
                 className={cn(
                   "flex items-center gap-1 rounded-md px-2 py-0.5 text-xs",
                   dueInfo.isOverdue
-                    ? "bg-red-500/20 text-red-300"
-                    : "bg-white/[0.04] text-white/50"
+                    ? "bg-red-500/20 text-red-600 dark:text-red-300"
+                    : "bg-muted text-muted-foreground"
                 )}
               >
                 <Calendar className="h-3 w-3" />
@@ -165,7 +197,7 @@ export function TaskCard({
             {task.tags.map((tag) => (
               <span
                 key={tag.id}
-                className="rounded-md bg-violet-500/10 px-2 py-0.5 text-xs text-violet-300"
+                className="rounded-md bg-violet-500/10 px-2 py-0.5 text-xs text-violet-600 dark:text-violet-300"
               >
                 {tag.name}
               </span>
@@ -188,7 +220,7 @@ export function TaskCard({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-white/40 hover:bg-white/[0.08] hover:text-white"
+                      className="h-8 w-8 cursor-pointer text-muted-foreground hover:bg-muted hover:text-foreground"
                       onClick={() => onEdit(task)}
                     >
                       <Pencil className="h-4 w-4" />
@@ -204,7 +236,7 @@ export function TaskCard({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-white/40 hover:bg-red-500/20 hover:text-red-400"
+                      className="h-8 w-8 cursor-pointer text-muted-foreground hover:bg-red-500/20 hover:text-red-500"
                       onClick={() => onDelete(task.id)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -218,14 +250,6 @@ export function TaskCard({
         </AnimatePresence>
       </div>
 
-      {/* Completed overlay effect */}
-      {task.isCompleted && (
-        <motion.div
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          className="absolute left-4 right-4 top-1/2 h-px origin-left bg-gradient-to-r from-emerald-500/50 via-emerald-500/20 to-transparent"
-        />
-      )}
     </motion.div>
   )
 }

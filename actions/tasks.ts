@@ -34,7 +34,10 @@ export async function getTasks() {
 
     const tasks = await prisma.task.findMany({
       where: { userId: user.id },
-      include: { tags: true },
+      include: {
+        tags: true,
+        subtasks: { orderBy: { order: "asc" } },
+      },
       orderBy: [{ status: "asc" }, { order: "asc" }, { createdAt: "desc" }],
     })
 
@@ -56,7 +59,10 @@ export async function getTasksByStatus(status: string) {
         userId: user.id,
         status: status as "TODO" | "IN_PROGRESS" | "DONE",
       },
-      include: { tags: true },
+      include: {
+        tags: true,
+        subtasks: { orderBy: { order: "asc" } },
+      },
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     })
 
@@ -73,15 +79,47 @@ export async function getTaskStats() {
   try {
     const user = await getCurrentUser()
 
-    const [total, inProgress, completed] = await Promise.all([
+    const [
+      totalTasks,
+      inProgressTasks,
+      completedTasks,
+      totalSubtasks,
+      completedSubtasks,
+    ] = await Promise.all([
       prisma.task.count({ where: { userId: user.id } }),
       prisma.task.count({ where: { userId: user.id, status: "IN_PROGRESS" } }),
       prisma.task.count({ where: { userId: user.id, status: "DONE" } }),
+      prisma.subTask.count({
+        where: { task: { userId: user.id } },
+      }),
+      prisma.subTask.count({
+        where: { task: { userId: user.id }, isCompleted: true },
+      }),
     ])
+
+    // Combined stats (tasks + subtasks)
+    const total = totalTasks + totalSubtasks
+    const completed = completedTasks + completedSubtasks
+    const inProgress = inProgressTasks
 
     return {
       success: true as const,
-      data: { total, inProgress, completed, todo: total - inProgress - completed },
+      data: {
+        total,
+        inProgress,
+        completed,
+        todo: totalTasks - inProgressTasks - completedTasks,
+        // Detailed breakdown
+        tasks: {
+          total: totalTasks,
+          completed: completedTasks,
+          inProgress: inProgressTasks,
+        },
+        subtasks: {
+          total: totalSubtasks,
+          completed: completedSubtasks,
+        },
+      },
     }
   } catch (error) {
     return {

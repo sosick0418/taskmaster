@@ -21,6 +21,7 @@ interface TaskColumnProps {
   onEdit: (task: Task) => void
   onDelete: (id: string) => void
   onAddTask: (status: TaskStatus) => void
+  onClick?: (task: Task) => void
 }
 
 const columnConfig: Record<
@@ -60,6 +61,7 @@ export function TaskColumn({
   onEdit,
   onDelete,
   onAddTask,
+  onClick,
 }: TaskColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -77,13 +79,13 @@ export function TaskColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex h-full flex-col rounded-2xl border bg-white/[0.01] backdrop-blur-sm transition-all duration-300",
+        "flex h-full flex-col rounded-2xl border bg-card/50 backdrop-blur-sm transition-all duration-300",
         config.borderColor,
-        isOver && "border-white/20 bg-white/[0.03] ring-1 ring-white/10"
+        isOver && "border-primary/30 bg-card/80 ring-1 ring-primary/20"
       )}
     >
       {/* Column Header */}
-      <div className="relative overflow-hidden rounded-t-2xl border-b border-white/[0.06] p-4">
+      <div className="relative overflow-hidden rounded-t-2xl border-b border-border p-4">
         {/* Background gradient */}
         <div
           className={cn(
@@ -104,8 +106,8 @@ export function TaskColumn({
               <Icon className="h-4 w-4 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-white">{title}</h3>
-              <p className="text-xs text-white/50">{tasks.length} tasks</p>
+              <h3 className="font-semibold text-foreground">{title}</h3>
+              <p className="text-xs text-muted-foreground">{tasks.length} tasks</p>
             </div>
           </div>
 
@@ -113,7 +115,7 @@ export function TaskColumn({
             variant="ghost"
             size="icon"
             onClick={() => onAddTask(id)}
-            className="h-8 w-8 text-white/40 hover:bg-white/10 hover:text-white"
+            className="h-8 w-8 cursor-pointer text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <Plus className="h-4 w-4" />
           </Button>
@@ -132,21 +134,22 @@ export function TaskColumn({
                   onToggleComplete={onToggleComplete}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  {...(onClick && { onClick })}
                 />
               ))
             ) : (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/[0.08] py-8 text-center"
+                className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-8 text-center"
               >
-                <Icon className="h-8 w-8 text-white/20" />
-                <p className="mt-2 text-sm text-white/30">No tasks</p>
+                <Icon className="h-8 w-8 text-muted-foreground/40" />
+                <p className="mt-2 text-sm text-muted-foreground">No tasks</p>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => onAddTask(id)}
-                  className="mt-2 text-white/40 hover:text-white"
+                  className="mt-2 cursor-pointer text-muted-foreground hover:text-foreground"
                 >
                   <Plus className="mr-1 h-3 w-3" />
                   Add task

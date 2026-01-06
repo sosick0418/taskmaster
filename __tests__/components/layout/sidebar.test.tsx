@@ -25,8 +25,8 @@ describe("Sidebar", () => {
   it("renders all navigation items", () => {
     render(<Sidebar {...defaultProps} />)
 
-    expect(screen.getByText("Dashboard")).toBeInTheDocument()
     expect(screen.getByText("Tasks")).toBeInTheDocument()
+    expect(screen.getByText("Analytics")).toBeInTheDocument()
     expect(screen.getByText("Settings")).toBeInTheDocument()
   })
 
@@ -49,12 +49,12 @@ describe("Sidebar", () => {
   it("renders navigation links with correct hrefs", () => {
     render(<Sidebar {...defaultProps} />)
 
-    const dashboardLink = screen.getByRole("link", { name: /dashboard/i })
     const tasksLink = screen.getByRole("link", { name: /tasks/i })
+    const analyticsLink = screen.getByRole("link", { name: /analytics/i })
     const settingsLink = screen.getByRole("link", { name: /settings/i })
 
-    expect(dashboardLink).toHaveAttribute("href", "/tasks")
     expect(tasksLink).toHaveAttribute("href", "/tasks")
+    expect(analyticsLink).toHaveAttribute("href", "/analytics")
     expect(settingsLink).toHaveAttribute("href", "/settings")
   })
 })

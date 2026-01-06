@@ -11,6 +11,9 @@ vi.mock("@/lib/prisma", () => ({
       delete: vi.fn(),
       count: vi.fn(),
     },
+    subTask: {
+      count: vi.fn(),
+    },
     $transaction: vi.fn(),
   },
 }))
@@ -62,7 +65,10 @@ describe("Task Server Actions", () => {
       expect(result.data).toEqual(mockTasks)
       expect(prisma.task.findMany).toHaveBeenCalledWith({
         where: { userId: VALID_USER_ID },
-        include: { tags: true },
+        include: {
+          tags: true,
+          subtasks: { orderBy: { order: "asc" } },
+        },
         orderBy: [{ status: "asc" }, { order: "asc" }, { createdAt: "desc" }],
       })
     })
@@ -80,18 +86,30 @@ describe("Task Server Actions", () => {
   describe("getTaskStats", () => {
     it("returns task statistics", async () => {
       vi.mocked(prisma.task.count)
-        .mockResolvedValueOnce(10) // total
-        .mockResolvedValueOnce(3) // inProgress
-        .mockResolvedValueOnce(5) // completed
+        .mockResolvedValueOnce(10) // totalTasks
+        .mockResolvedValueOnce(3) // inProgressTasks
+        .mockResolvedValueOnce(5) // completedTasks
+      vi.mocked(prisma.subTask.count)
+        .mockResolvedValueOnce(8) // totalSubtasks
+        .mockResolvedValueOnce(4) // completedSubtasks
 
       const result = await getTaskStats()
 
       expect(result.success).toBe(true)
       expect(result.data).toEqual({
-        total: 10,
+        total: 18, // 10 tasks + 8 subtasks
         inProgress: 3,
-        completed: 5,
-        todo: 2,
+        completed: 9, // 5 completed tasks + 4 completed subtasks
+        todo: 2, // 10 - 3 - 5
+        tasks: {
+          total: 10,
+          completed: 5,
+          inProgress: 3,
+        },
+        subtasks: {
+          total: 8,
+          completed: 4,
+        },
       })
     })
   })

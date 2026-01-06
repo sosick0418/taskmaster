@@ -69,6 +69,15 @@ const mockStats = {
   inProgress: 0,
   completed: 1,
   todo: 1,
+  tasks: {
+    total: 2,
+    completed: 1,
+    inProgress: 0,
+  },
+  subtasks: {
+    total: 0,
+    completed: 0,
+  },
 }
 
 describe("TaskListView", () => {
@@ -107,11 +116,11 @@ describe("TaskListView", () => {
         userName="John"
       />
     )
-    expect(screen.getByText("Total Tasks")).toBeInTheDocument()
-    expect(screen.getByText("In Progress")).toBeInTheDocument()
+    expect(screen.getByText("Tasks")).toBeInTheDocument()
+    expect(screen.getByText("Subtasks")).toBeInTheDocument()
     expect(screen.getByText("Completed")).toBeInTheDocument()
     // Stats values are rendered - check the label exists
-    const statLabels = ["Total Tasks", "In Progress", "Completed"]
+    const statLabels = ["Tasks", "Subtasks", "Completed"]
     statLabels.forEach(label => {
       expect(screen.getByText(label)).toBeInTheDocument()
     })
@@ -155,10 +164,15 @@ describe("TaskListView", () => {
   })
 
   it("renders empty state when no tasks", () => {
+    const emptyStats = {
+      total: 0, inProgress: 0, completed: 0, todo: 0,
+      tasks: { total: 0, completed: 0, inProgress: 0 },
+      subtasks: { total: 0, completed: 0 },
+    }
     render(
       <TaskListView
         initialTasks={[]}
-        stats={{ total: 0, inProgress: 0, completed: 0, todo: 0 }}
+        stats={emptyStats}
         userName="John"
       />
     )
@@ -167,10 +181,15 @@ describe("TaskListView", () => {
   })
 
   it("renders create task button in empty state", () => {
+    const emptyStats = {
+      total: 0, inProgress: 0, completed: 0, todo: 0,
+      tasks: { total: 0, completed: 0, inProgress: 0 },
+      subtasks: { total: 0, completed: 0 },
+    }
     render(
       <TaskListView
         initialTasks={[]}
-        stats={{ total: 0, inProgress: 0, completed: 0, todo: 0 }}
+        stats={emptyStats}
         userName="John"
       />
     )

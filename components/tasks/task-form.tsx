@@ -5,10 +5,12 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { motion, AnimatePresence } from "framer-motion"
 import { format } from "date-fns"
-import { CalendarIcon, Loader2, X, Plus, Sparkles } from "lucide-react"
+import { CalendarIcon, Loader2, X, Plus, Sparkles, ListTodo } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { z } from "zod"
 import type { Priority, TaskStatus } from "@/lib/validations/task"
+import type { SubTask } from "@/types/task"
+import { SubtaskList } from "./subtask-list"
 
 // Local form schema with explicit types
 const formSchema = z.object({
@@ -54,6 +56,7 @@ interface TaskFormData {
   status: TaskStatus
   dueDate?: Date | null
   tags: { id: number; name: string }[]
+  subtasks?: SubTask[]
 }
 
 interface TaskFormProps {
@@ -168,7 +171,7 @@ export function TaskForm({ open, onOpenChange, task, onSubmit }: TaskFormProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-white/[0.08] bg-black/95 backdrop-blur-2xl sm:max-w-lg">
+      <DialogContent className="border-border bg-background/95 backdrop-blur-2xl sm:max-w-lg dark:bg-black/95">
         {/* Gradient accent */}
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-violet-500/50 via-fuchsia-500/50 to-cyan-500/50" />
 
@@ -179,7 +182,7 @@ export function TaskForm({ open, onOpenChange, task, onSubmit }: TaskFormProps) 
             </div>
             {isEditing ? "Edit Task" : "Create Task"}
           </DialogTitle>
-          <DialogDescription className="text-white/50">
+          <DialogDescription className="text-muted-foreground">
             {isEditing
               ? "Update your task details below."
               : "Add a new task to your list."}
@@ -189,13 +192,13 @@ export function TaskForm({ open, onOpenChange, task, onSubmit }: TaskFormProps) 
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-5">
           {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="title" className="text-white/70">
+            <Label htmlFor="title" className="text-foreground/70">
               Title <span className="text-red-400">*</span>
             </Label>
             <Input
               id="title"
               placeholder="What needs to be done?"
-              className="border-white/[0.08] bg-white/[0.02] placeholder:text-white/30 focus:border-violet-500/50 focus:ring-violet-500/20"
+              className="border-border bg-muted/50 placeholder:text-muted-foreground/50 focus:border-violet-500/50 focus:ring-violet-500/20"
               {...register("title")}
             />
             {errors.title && (
@@ -211,13 +214,13 @@ export function TaskForm({ open, onOpenChange, task, onSubmit }: TaskFormProps) 
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-white/70">
+            <Label htmlFor="description" className="text-foreground/70">
               Description
             </Label>
             <Textarea
               id="description"
               placeholder="Add more details..."
-              className="min-h-[80px] resize-none border-white/[0.08] bg-white/[0.02] placeholder:text-white/30 focus:border-violet-500/50 focus:ring-violet-500/20"
+              className="min-h-[80px] resize-none border-border bg-muted/50 placeholder:text-muted-foreground/50 focus:border-violet-500/50 focus:ring-violet-500/20"
               {...register("description")}
             />
           </div>
@@ -226,20 +229,20 @@ export function TaskForm({ open, onOpenChange, task, onSubmit }: TaskFormProps) 
           <div className="grid gap-4 sm:grid-cols-2">
             {/* Priority */}
             <div className="space-y-2">
-              <Label className="text-white/70">Priority</Label>
+              <Label className="text-foreground/70">Priority</Label>
               <Select
                 value={selectedPriority}
                 onValueChange={(value) => setValue("priority", value as Priority)}
               >
-                <SelectTrigger className="border-white/[0.08] bg-white/[0.02] focus:ring-violet-500/20">
+                <SelectTrigger className="border-border bg-muted/50 focus:ring-violet-500/20">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="border-white/[0.08] bg-black/95 backdrop-blur-xl">
+                <SelectContent className="border-border bg-popover backdrop-blur-xl">
                   {priorityOptions.map((option) => (
                     <SelectItem
                       key={option.value}
                       value={option.value}
-                      className={cn("focus:bg-white/[0.08]", option.color)}
+                      className={cn("cursor-pointer focus:bg-muted", option.color)}
                     >
                       {option.label}
                     </SelectItem>
@@ -250,20 +253,20 @@ export function TaskForm({ open, onOpenChange, task, onSubmit }: TaskFormProps) 
 
             {/* Status */}
             <div className="space-y-2">
-              <Label className="text-white/70">Status</Label>
+              <Label className="text-foreground/70">Status</Label>
               <Select
                 value={selectedStatus}
                 onValueChange={(value) => setValue("status", value as TaskStatus)}
               >
-                <SelectTrigger className="border-white/[0.08] bg-white/[0.02] focus:ring-violet-500/20">
+                <SelectTrigger className="border-border bg-muted/50 focus:ring-violet-500/20">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="border-white/[0.08] bg-black/95 backdrop-blur-xl">
+                <SelectContent className="border-border bg-popover backdrop-blur-xl">
                   {statusOptions.map((option) => (
                     <SelectItem
                       key={option.value}
                       value={option.value}
-                      className="focus:bg-white/[0.08]"
+                      className="cursor-pointer focus:bg-muted"
                     >
                       {option.label}
                     </SelectItem>
@@ -275,14 +278,14 @@ export function TaskForm({ open, onOpenChange, task, onSubmit }: TaskFormProps) 
 
           {/* Due Date */}
           <div className="space-y-2">
-            <Label className="text-white/70">Due Date</Label>
+            <Label className="text-foreground/70">Due Date</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start border-white/[0.08] bg-white/[0.02] text-left font-normal hover:bg-white/[0.04]",
-                    !selectedDate && "text-white/40"
+                    "w-full cursor-pointer justify-start border-border bg-muted/50 text-left font-normal hover:bg-muted",
+                    !selectedDate && "text-muted-foreground"
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
@@ -290,7 +293,7 @@ export function TaskForm({ open, onOpenChange, task, onSubmit }: TaskFormProps) 
                 </Button>
               </PopoverTrigger>
               <PopoverContent
-                className="w-auto border-white/[0.08] bg-black/95 p-0 backdrop-blur-xl"
+                className="w-auto border-border bg-popover p-0 backdrop-blur-xl"
                 align="start"
               >
                 <Calendar
@@ -305,21 +308,21 @@ export function TaskForm({ open, onOpenChange, task, onSubmit }: TaskFormProps) 
 
           {/* Tags */}
           <div className="space-y-2">
-            <Label className="text-white/70">Tags</Label>
+            <Label className="text-foreground/70">Tags</Label>
             <div className="flex gap-2">
               <Input
                 placeholder="Add a tag..."
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="border-white/[0.08] bg-white/[0.02] placeholder:text-white/30 focus:border-violet-500/50 focus:ring-violet-500/20"
+                className="border-border bg-muted/50 placeholder:text-muted-foreground/50 focus:border-violet-500/50 focus:ring-violet-500/20"
               />
               <Button
                 type="button"
                 variant="outline"
                 size="icon"
                 onClick={handleAddTag}
-                className="shrink-0 border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06]"
+                className="shrink-0 cursor-pointer border-border bg-muted/50 hover:bg-muted"
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -338,13 +341,13 @@ export function TaskForm({ open, onOpenChange, task, onSubmit }: TaskFormProps) 
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
-                      className="flex items-center gap-1 rounded-full bg-violet-500/20 px-3 py-1 text-xs text-violet-300"
+                      className="flex items-center gap-1 rounded-full bg-violet-500/20 px-3 py-1 text-xs text-violet-600 dark:text-violet-300"
                     >
                       {tag}
                       <button
                         type="button"
                         onClick={() => handleRemoveTag(tag)}
-                        className="ml-1 rounded-full p-0.5 hover:bg-white/10"
+                        className="ml-1 cursor-pointer rounded-full p-0.5 hover:bg-muted"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -355,20 +358,36 @@ export function TaskForm({ open, onOpenChange, task, onSubmit }: TaskFormProps) 
             </AnimatePresence>
           </div>
 
+          {/* Subtasks - only show when editing */}
+          {isEditing && task?.id && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-foreground/70">
+                <ListTodo className="h-4 w-4" />
+                Subtasks
+              </Label>
+              <div className="rounded-lg border border-border bg-muted/30 p-3">
+                <SubtaskList
+                  taskId={task.id}
+                  subtasks={task.subtasks ?? []}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-2">
             <Button
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="text-white/60 hover:bg-white/[0.06] hover:text-white"
+              className="cursor-pointer text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-gradient-to-r from-violet-500 to-cyan-500 text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40"
+              className="cursor-pointer bg-gradient-to-r from-violet-500 to-cyan-500 text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40"
             >
               {isSubmitting ? (
                 <>

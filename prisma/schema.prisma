@@ -12,16 +12,18 @@ datasource db {
 
 // Auth.js Models
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  emailVerified DateTime?
-  name          String?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  tasks         Task[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                      String                   @id @default(uuid())
+  email                   String                   @unique
+  emailVerified           DateTime?
+  name                    String?
+  image                   String?
+  accounts                Account[]
+  sessions                Session[]
+  tasks                   Task[]
+  notifications           Notification[]
+  notificationPreference  NotificationPreference?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
 }
 
 model Account {
@@ -61,22 +63,37 @@ model VerificationToken {
 
 // Task Manager Models
 model Task {
-  id          String     @id @default(uuid())
-  title       String
-  description String?
-  isCompleted Boolean    @default(false)
-  status      TaskStatus @default(TODO)
-  priority    Priority   @default(MEDIUM)
-  order       Int        @default(0)
-  dueDate     DateTime?
-  userId      String
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tags        Tag[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id            String         @id @default(uuid())
+  title         String
+  description   String?
+  isCompleted   Boolean        @default(false)
+  status        TaskStatus     @default(TODO)
+  priority      Priority       @default(MEDIUM)
+  order         Int            @default(0)
+  dueDate       DateTime?
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags          Tag[]
+  subtasks      SubTask[]
+  notifications Notification[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@index([userId, createdAt])
   @@index([userId, status])
+}
+
+model SubTask {
+  id          String   @id @default(uuid())
+  title       String
+  isCompleted Boolean  @default(false)
+  order       Int      @default(0)
+  taskId      String
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([taskId, order])
 }
 
 model Tag {
@@ -96,4 +113,44 @@ enum Priority {
   MEDIUM
   HIGH
   URGENT
+}
+
+// Notification Models
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  taskId    String?
+  task      Task?            @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+}
+
+model NotificationPreference {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  inAppEnabled       Boolean  @default(true)
+  dueDateReminder    Boolean  @default(true)
+  reminderDaysBefore Int      @default(1)
+  dailyDigest        Boolean  @default(false)
+  digestTime         String?  @default("09:00")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum NotificationType {
+  DUE_DATE_REMINDER
+  TASK_OVERDUE
+  DAILY_DIGEST
+  TASK_COMPLETED
+  SYSTEM
 }
