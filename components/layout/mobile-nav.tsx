@@ -3,14 +3,13 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion";
 import {
-  LayoutDashboard,
   CheckSquare,
   Settings,
   Menu,
   Sparkles,
-  X,
+  BarChart3,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -18,16 +17,16 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 
 const navItems = [
   {
-    title: "Dashboard",
-    href: "/tasks",
-    icon: LayoutDashboard,
-    gradient: "from-violet-500 to-purple-600",
-  },
-  {
     title: "Tasks",
     href: "/tasks",
     icon: CheckSquare,
-    gradient: "from-cyan-500 to-blue-600",
+    gradient: "from-violet-500 to-cyan-600",
+  },
+  {
+    title: "Analytics",
+    href: "/analytics",
+    icon: BarChart3,
+    gradient: "from-emerald-500 to-green-600",
   },
   {
     title: "Settings",
@@ -47,7 +46,7 @@ export function MobileNav() {
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden text-white/60 hover:bg-white/[0.06] hover:text-white"
+          className="md:hidden cursor-pointer text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <Menu className="h-5 w-5" />
           <span className="sr-only">Open menu</span>
@@ -55,16 +54,16 @@ export function MobileNav() {
       </SheetTrigger>
       <SheetContent
         side="left"
-        className="w-72 border-white/[0.06] bg-black/95 backdrop-blur-2xl p-0"
+        className="w-72 border-border bg-background/95 backdrop-blur-2xl p-0 dark:bg-black/95"
       >
-        <SheetHeader className="border-b border-white/[0.06] px-6 py-4">
+        <SheetHeader className="border-b border-border px-6 py-4">
           <SheetTitle className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-cyan-500">
               <Sparkles className="h-5 w-5 text-white" />
             </div>
             <span className="text-lg font-bold">
               <span className="gradient-text">Task</span>
-              <span className="text-white">master</span>
+              <span className="text-foreground">master</span>
             </span>
           </SheetTitle>
         </SheetHeader>
@@ -84,10 +83,10 @@ export function MobileNav() {
                   href={item.href}
                   onClick={() => setOpen(false)}
                   className={cn(
-                    "group relative flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-300",
+                    "group relative flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 transition-all duration-300",
                     isActive
-                      ? "bg-white/[0.08] text-white"
-                      : "text-white/60 hover:bg-white/[0.04] hover:text-white"
+                      ? "bg-primary/10 text-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                   )}
                 >
                   {isActive && (
@@ -105,13 +104,13 @@ export function MobileNav() {
                       "flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
                       isActive
                         ? `bg-gradient-to-br ${item.gradient}`
-                        : "bg-white/[0.04] group-hover:bg-white/[0.08]"
+                        : "bg-muted/60 dark:bg-muted group-hover:bg-accent"
                     )}
                   >
                     <item.icon
                       className={cn(
                         "h-5 w-5",
-                        isActive ? "text-white" : "text-white/70 group-hover:text-white"
+                        isActive ? "text-white" : "text-muted-foreground group-hover:text-accent-foreground"
                       )}
                     />
                   </div>

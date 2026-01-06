@@ -1,40 +1,58 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useCallback, useSyncExternalStore } from "react"
 
 const STORAGE_KEY = "taskmaster-sidebar-collapsed"
+const SIDEBAR_CHANGE_EVENT = "sidebar-change"
+
+// Helper to notify subscribers when localStorage changes
+function notifyChange() {
+  window.dispatchEvent(new Event(SIDEBAR_CHANGE_EVENT))
+}
+
+function subscribe(callback: () => void): () => void {
+  window.addEventListener(SIDEBAR_CHANGE_EVENT, callback)
+  window.addEventListener("storage", callback)
+  return () => {
+    window.removeEventListener(SIDEBAR_CHANGE_EVENT, callback)
+    window.removeEventListener("storage", callback)
+  }
+}
+
+function getSnapshot(defaultCollapsed: boolean): boolean {
+  const stored = localStorage.getItem(STORAGE_KEY)
+  return stored !== null ? stored === "true" : defaultCollapsed
+}
+
+function getServerSnapshot(defaultCollapsed: boolean): boolean {
+  return defaultCollapsed
+}
 
 export function useSidebar(defaultCollapsed = false) {
-  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed)
-  const [isLoaded, setIsLoaded] = useState(false)
+  const isCollapsed = useSyncExternalStore(
+    subscribe,
+    () => getSnapshot(defaultCollapsed),
+    () => getServerSnapshot(defaultCollapsed)
+  )
 
-  // Load preference from localStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored !== null) {
-      setIsCollapsed(stored === "true")
-    }
-    setIsLoaded(true)
-  }, [])
-
-  // Save preference to localStorage when it changes
   const toggle = useCallback(() => {
-    setIsCollapsed((prev) => {
-      const newValue = !prev
-      localStorage.setItem(STORAGE_KEY, String(newValue))
-      return newValue
-    })
-  }, [])
+    const current = getSnapshot(defaultCollapsed)
+    localStorage.setItem(STORAGE_KEY, String(!current))
+    notifyChange()
+  }, [defaultCollapsed])
 
   const collapse = useCallback(() => {
-    setIsCollapsed(true)
     localStorage.setItem(STORAGE_KEY, "true")
+    notifyChange()
   }, [])
 
   const expand = useCallback(() => {
-    setIsCollapsed(false)
     localStorage.setItem(STORAGE_KEY, "false")
+    notifyChange()
   }, [])
+
+  // isLoaded is always true on client since useSyncExternalStore handles hydration
+  const isLoaded = typeof window !== "undefined"
 
   return {
     isCollapsed,

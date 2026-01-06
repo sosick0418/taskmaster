@@ -1,11 +1,23 @@
 "use client"
 
+import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { motion } from "framer-motion"
 
 export function LoginForm() {
+  const [testEmail, setTestEmail] = useState("test@example.com")
+  const [isLoading, setIsLoading] = useState(false)
+  const isDev = process.env.NODE_ENV === "development"
+
+  const handleTestLogin = async () => {
+    setIsLoading(true)
+    await signIn("credentials", { email: testEmail, callbackUrl: "/tasks" })
+    setIsLoading(false)
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -75,6 +87,42 @@ export function LoginForm() {
               Continue with Google
             </Button>
           </motion.div>
+
+          {/* Development only: Test login */}
+          {isDev && (
+            <>
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-white/10" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-transparent px-2 text-white/40">Dev Only</span>
+                </div>
+              </div>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 }}
+                className="space-y-2"
+              >
+                <Input
+                  type="email"
+                  placeholder="test@example.com"
+                  value={testEmail}
+                  onChange={(e) => setTestEmail(e.target.value)}
+                  className="border-white/10 bg-white/5 text-white placeholder:text-white/40"
+                />
+                <Button
+                  variant="outline"
+                  className="w-full border-amber-500/50 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+                  onClick={handleTestLogin}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Signing in..." : "Test Login (Dev)"}
+                </Button>
+              </motion.div>
+            </>
+          )}
         </CardContent>
       </Card>
     </motion.div>

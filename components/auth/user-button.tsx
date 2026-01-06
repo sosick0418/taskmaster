@@ -27,7 +27,7 @@ export function UserButton() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="relative h-9 w-9 rounded-full ring-2 ring-white/10 transition-all hover:ring-white/20 focus:outline-none focus:ring-white/30">
+        <button className="relative h-9 w-9 cursor-pointer rounded-full ring-2 ring-border transition-all hover:ring-primary/30 focus:outline-none focus:ring-primary/50">
           <Avatar className="h-9 w-9">
             <AvatarImage src={session.user.image ?? undefined} alt={session.user.name ?? "User"} />
             <AvatarFallback className="bg-gradient-to-br from-violet-500 to-cyan-500 text-white">
@@ -44,13 +44,13 @@ export function UserButton() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer">
           <Settings className="mr-2 h-4 w-4" />
           Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          className="text-red-500 focus:text-red-500"
+          className="cursor-pointer text-red-500 focus:text-red-500"
           onClick={() => signOut({ callbackUrl: "/" })}
         >
           <LogOut className="mr-2 h-4 w-4" />

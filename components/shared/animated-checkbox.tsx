@@ -23,10 +23,10 @@ export function AnimatedCheckbox({
       disabled={disabled}
       whileTap={{ scale: 0.9 }}
       className={cn(
-        "relative flex h-5 w-5 items-center justify-center rounded-md border-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
+        "relative flex h-5 w-5 cursor-pointer items-center justify-center rounded-md border-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         checked
           ? "border-violet-500 bg-gradient-to-br from-violet-500 to-cyan-500"
-          : "border-white/30 bg-transparent hover:border-white/50",
+          : "border-muted-foreground/40 bg-transparent hover:border-muted-foreground/60",
         disabled && "cursor-not-allowed opacity-50",
         className
       )}
@@ -67,13 +67,27 @@ export function AnimatedCheckbox({
   )
 }
 
+interface CircularCheckboxProps extends AnimatedCheckboxProps {
+  size?: "sm" | "md"
+}
+
 // Alternative circular checkbox with more dramatic animation
 export function CircularCheckbox({
   checked,
   onChange,
   disabled = false,
   className,
-}: AnimatedCheckboxProps) {
+  size = "md",
+}: CircularCheckboxProps) {
+  const sizeClasses = {
+    sm: "h-4 w-4",
+    md: "h-6 w-6",
+  }
+  const iconSizes = {
+    sm: "h-2.5 w-2.5",
+    md: "h-3.5 w-3.5",
+  }
+
   return (
     <motion.button
       type="button"
@@ -82,16 +96,17 @@ export function CircularCheckbox({
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
       className={cn(
-        "relative flex h-6 w-6 items-center justify-center rounded-full border-2 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500",
+        "relative flex cursor-pointer items-center justify-center rounded-full border-2 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500",
+        sizeClasses[size],
         checked
           ? "border-transparent bg-gradient-to-br from-violet-500 via-fuchsia-500 to-cyan-500 shadow-lg shadow-violet-500/30"
-          : "border-white/20 bg-white/[0.02] hover:border-white/40 hover:bg-white/[0.05]",
+          : "border-muted-foreground/30 bg-muted/30 hover:border-muted-foreground/50 hover:bg-muted/50",
         disabled && "cursor-not-allowed opacity-50",
         className
       )}
     >
       <motion.svg
-        className="h-3.5 w-3.5"
+        className={iconSizes[size]}
         viewBox="0 0 14 14"
         fill="none"
         initial={false}

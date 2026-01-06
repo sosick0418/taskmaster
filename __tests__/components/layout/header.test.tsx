@@ -2,28 +2,35 @@ import { describe, it, expect, vi } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
 import { Header } from "@/components/layout/header"
 
-describe("Header", () => {
-  const defaultProps = {
-    view: "list" as const,
-    onViewChange: vi.fn(),
-    onSearchOpen: vi.fn(),
-  }
+// Mock child components
+vi.mock("@/components/notifications/notification-bell", () => ({
+  NotificationBell: () => <button data-testid="notification-bell">Notifications</button>,
+}))
 
+vi.mock("@/components/auth/user-button", () => ({
+  UserButton: () => <button data-testid="user-button">User</button>,
+}))
+
+vi.mock("@/components/layout/theme-toggle", () => ({
+  ThemeToggle: () => <button data-testid="theme-toggle">Toggle Theme</button>,
+}))
+
+describe("Header", () => {
   it("renders the search bar", () => {
-    render(<Header {...defaultProps} />)
+    render(<Header />)
 
     expect(screen.getByText("Search tasks...")).toBeInTheDocument()
   })
 
   it("renders keyboard shortcut hint", () => {
-    render(<Header {...defaultProps} />)
+    render(<Header />)
 
     expect(screen.getByText("K")).toBeInTheDocument()
   })
 
   it("calls onSearchOpen when search bar is clicked", () => {
     const onSearchOpen = vi.fn()
-    render(<Header {...defaultProps} onSearchOpen={onSearchOpen} />)
+    render(<Header onSearchOpen={onSearchOpen} />)
 
     const searchButton = screen.getByRole("button", { name: /search tasks/i })
     fireEvent.click(searchButton)
@@ -31,50 +38,21 @@ describe("Header", () => {
     expect(onSearchOpen).toHaveBeenCalledTimes(1)
   })
 
-  it("renders view toggle buttons", () => {
-    render(<Header {...defaultProps} />)
+  it("renders notification bell", () => {
+    render(<Header />)
 
-    expect(screen.getByRole("button", { name: /list view/i })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /board view/i })).toBeInTheDocument()
-  })
-
-  it("highlights list view when view is list", () => {
-    render(<Header {...defaultProps} view="list" />)
-
-    const listButton = screen.getByRole("button", { name: /list view/i })
-    expect(listButton).toHaveClass("bg-white/[0.1]")
-  })
-
-  it("highlights board view when view is board", () => {
-    render(<Header {...defaultProps} view="board" />)
-
-    const boardButton = screen.getByRole("button", { name: /board view/i })
-    expect(boardButton).toHaveClass("bg-white/[0.1]")
-  })
-
-  it("calls onViewChange with 'list' when list button is clicked", () => {
-    const onViewChange = vi.fn()
-    render(<Header {...defaultProps} view="board" onViewChange={onViewChange} />)
-
-    const listButton = screen.getByRole("button", { name: /list view/i })
-    fireEvent.click(listButton)
-
-    expect(onViewChange).toHaveBeenCalledWith("list")
-  })
-
-  it("calls onViewChange with 'board' when board button is clicked", () => {
-    const onViewChange = vi.fn()
-    render(<Header {...defaultProps} view="list" onViewChange={onViewChange} />)
-
-    const boardButton = screen.getByRole("button", { name: /board view/i })
-    fireEvent.click(boardButton)
-
-    expect(onViewChange).toHaveBeenCalledWith("board")
+    expect(screen.getByTestId("notification-bell")).toBeInTheDocument()
   })
 
   it("renders theme toggle button", () => {
-    render(<Header {...defaultProps} />)
+    render(<Header />)
 
-    expect(screen.getByRole("button", { name: /toggle theme/i })).toBeInTheDocument()
+    expect(screen.getByTestId("theme-toggle")).toBeInTheDocument()
+  })
+
+  it("renders user button", () => {
+    render(<Header />)
+
+    expect(screen.getByTestId("user-button")).toBeInTheDocument()
   })
 })
