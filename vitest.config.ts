@@ -18,6 +18,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./"),
+      // Fix for next-auth v5 + vitest module resolution
+      "next/server": path.resolve(__dirname, "./node_modules/next/dist/server/web/exports/index.js"),
+      "next/server.js": path.resolve(__dirname, "./node_modules/next/dist/server/web/exports/index.js"),
     },
   },
 })

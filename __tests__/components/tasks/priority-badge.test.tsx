@@ -25,15 +25,15 @@ describe("PriorityBadge", () => {
 
   it("applies correct styling classes for each priority", () => {
     const { rerender, container } = render(<PriorityBadge priority="LOW" />)
-    expect(container.firstChild).toHaveClass("text-slate-300")
+    expect(container.firstChild).toHaveClass("bg-slate-500/20", "text-slate-600")
 
     rerender(<PriorityBadge priority="MEDIUM" />)
-    expect(container.firstChild).toHaveClass("text-blue-300")
+    expect(container.firstChild).toHaveClass("bg-blue-500/20", "text-blue-600")
 
     rerender(<PriorityBadge priority="HIGH" />)
-    expect(container.firstChild).toHaveClass("text-amber-300")
+    expect(container.firstChild).toHaveClass("bg-amber-500/20", "text-amber-600")
 
     rerender(<PriorityBadge priority="URGENT" />)
-    expect(container.firstChild).toHaveClass("text-red-300")
+    expect(container.firstChild).toHaveClass("bg-red-500/20", "text-red-600")
   })
 })

@@ -1,6 +1,27 @@
 import "@testing-library/jest-dom/vitest"
 import { vi, beforeEach } from "vitest"
 
+// Mock @/lib/auth (must be before any component imports)
+vi.mock("@/lib/auth", () => ({
+  auth: vi.fn(() => Promise.resolve({
+    user: {
+      id: "test-user-id",
+      name: "Test User",
+      email: "test@example.com",
+      image: "https://example.com/avatar.jpg",
+    },
+  })),
+}))
+
+// Mock notifications actions
+vi.mock("@/actions/notifications", () => ({
+  getNotifications: vi.fn(() => Promise.resolve({ success: true, data: [] })),
+  getUnreadCount: vi.fn(() => Promise.resolve({ success: true, data: 0 })),
+  markAsRead: vi.fn(() => Promise.resolve({ success: true })),
+  markAllAsRead: vi.fn(() => Promise.resolve({ success: true })),
+  deleteNotification: vi.fn(() => Promise.resolve({ success: true })),
+}))
+
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -52,6 +73,9 @@ vi.mock("framer-motion", async () => {
       ),
       span: ({ children, ...props }: React.HTMLAttributes<HTMLSpanElement>) => (
         <span {...props}>{children}</span>
+      ),
+      p: ({ children, ...props }: React.HTMLAttributes<HTMLParagraphElement>) => (
+        <p {...props}>{children}</p>
       ),
       aside: ({ children, ...props }: React.HTMLAttributes<HTMLElement>) => (
         <aside {...props}>{children}</aside>

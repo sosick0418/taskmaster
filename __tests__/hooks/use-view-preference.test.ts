@@ -1,12 +1,27 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { renderHook, act } from "@testing-library/react"
 import { useViewPreference } from "@/hooks/use-view-preference"
 
 describe("useViewPreference", () => {
+  let storedValue: string | null = null
+  const originalGetItem = localStorage.getItem
+  const originalSetItem = localStorage.setItem
+
   beforeEach(() => {
     vi.clearAllMocks()
-    localStorage.getItem = vi.fn().mockReturnValue(null)
-    localStorage.setItem = vi.fn()
+    storedValue = null
+    localStorage.getItem = vi.fn(() => storedValue)
+    localStorage.setItem = vi.fn((key: string, value: string) => {
+      storedValue = value
+      // Dispatch event to trigger useSyncExternalStore re-render
+      window.dispatchEvent(new Event("view-preference-change"))
+    })
+  })
+
+  afterEach(() => {
+    storedValue = null
+    localStorage.getItem = originalGetItem
+    localStorage.setItem = originalSetItem
   })
 
   it("returns default view as list", () => {
@@ -32,7 +47,10 @@ describe("useViewPreference", () => {
   })
 
   it("changes view to list", () => {
+    storedValue = "board"
     const { result } = renderHook(() => useViewPreference("board"))
+
+    expect(result.current.view).toBe("board")
 
     act(() => {
       result.current.setView("list")
@@ -55,15 +73,16 @@ describe("useViewPreference", () => {
   })
 
   it("loads view preference from localStorage on mount", () => {
-    localStorage.getItem = vi.fn().mockReturnValue("board")
+    storedValue = "board"
 
     const { result } = renderHook(() => useViewPreference())
 
     expect(result.current.isLoaded).toBe(true)
+    expect(result.current.view).toBe("board")
   })
 
   it("ignores invalid localStorage values", () => {
-    localStorage.getItem = vi.fn().mockReturnValue("invalid")
+    storedValue = "invalid"
 
     const { result } = renderHook(() => useViewPreference())
 

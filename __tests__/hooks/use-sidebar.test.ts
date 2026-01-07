@@ -1,12 +1,27 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { renderHook, act } from "@testing-library/react"
 import { useSidebar } from "@/hooks/use-sidebar"
 
 describe("useSidebar", () => {
+  let storedValue: string | null = null
+  const originalGetItem = localStorage.getItem
+  const originalSetItem = localStorage.setItem
+
   beforeEach(() => {
     vi.clearAllMocks()
-    localStorage.getItem = vi.fn().mockReturnValue(null)
-    localStorage.setItem = vi.fn()
+    storedValue = null
+    localStorage.getItem = vi.fn(() => storedValue)
+    localStorage.setItem = vi.fn((key: string, value: string) => {
+      storedValue = value
+      // Dispatch event to trigger useSyncExternalStore re-render
+      window.dispatchEvent(new Event("sidebar-change"))
+    })
+  })
+
+  afterEach(() => {
+    storedValue = null
+    localStorage.getItem = originalGetItem
+    localStorage.setItem = originalSetItem
   })
 
   it("returns default collapsed state as false", () => {
@@ -23,6 +38,8 @@ describe("useSidebar", () => {
 
   it("toggles collapsed state", () => {
     const { result } = renderHook(() => useSidebar())
+
+    expect(result.current.isCollapsed).toBe(false)
 
     act(() => {
       result.current.toggle()
@@ -65,7 +82,10 @@ describe("useSidebar", () => {
   })
 
   it("expands sidebar", () => {
+    storedValue = "true"
     const { result } = renderHook(() => useSidebar(true))
+
+    expect(result.current.isCollapsed).toBe(true)
 
     act(() => {
       result.current.expand()
@@ -79,11 +99,11 @@ describe("useSidebar", () => {
   })
 
   it("loads state from localStorage on mount", () => {
-    localStorage.getItem = vi.fn().mockReturnValue("true")
+    storedValue = "true"
 
     const { result } = renderHook(() => useSidebar())
 
-    // After useEffect runs
     expect(result.current.isLoaded).toBe(true)
+    expect(result.current.isCollapsed).toBe(true)
   })
 })

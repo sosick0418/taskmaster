@@ -18,7 +18,14 @@ export default async function TasksPage() {
   const tasks = tasksResult.success ? tasksResult.data : []
   const stats = statsResult.success
     ? statsResult.data
-    : { total: 0, inProgress: 0, completed: 0, todo: 0 }
+    : {
+        total: 0,
+        inProgress: 0,
+        completed: 0,
+        todo: 0,
+        tasks: { total: 0, completed: 0, inProgress: 0 },
+        subtasks: { total: 0, completed: 0 },
+      }
 
   return (
     <TaskListView

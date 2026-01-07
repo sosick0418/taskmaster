@@ -114,12 +114,12 @@ export function TaskFilters({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         {/* Search Input */}
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search tasks..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10 border-white/[0.08] bg-white/[0.02] placeholder:text-white/30 focus:border-violet-500/50 focus:ring-violet-500/20"
+            className="pl-10 border-border bg-muted/50 placeholder:text-muted-foreground focus:border-violet-500/50 focus:ring-violet-500/20"
           />
           <AnimatePresence>
             {searchQuery && (
@@ -128,7 +128,7 @@ export function TaskFilters({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 onClick={() => onSearchChange("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-white/40 hover:bg-white/10 hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 <X className="h-3.5 w-3.5" />
               </motion.button>
@@ -145,7 +145,7 @@ export function TaskFilters({
                 variant="outline"
                 size="sm"
                 className={cn(
-                  "gap-2 border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04]",
+                  "cursor-pointer gap-2 border-border bg-muted/50 hover:bg-muted",
                   activeFilterCount > 0 && "border-violet-500/30 bg-violet-500/10"
                 )}
               >
@@ -163,16 +163,16 @@ export function TaskFilters({
             </PopoverTrigger>
             <PopoverContent
               align="end"
-              className="w-72 border-white/[0.08] bg-black/95 p-4 backdrop-blur-xl"
+              className="w-72 border-border bg-popover p-4 backdrop-blur-xl"
             >
               <div className="space-y-4">
                 {/* Status Filter */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-white/70">Status</span>
+                    <span className="text-sm font-medium text-foreground/70">Status</span>
                     <button
                       onClick={() => onStatusFilterChange(["TODO", "IN_PROGRESS", "DONE"])}
-                      className="text-xs text-white/40 hover:text-white/60"
+                      className="cursor-pointer text-xs text-muted-foreground hover:text-foreground"
                     >
                       Select all
                     </button>
@@ -186,10 +186,10 @@ export function TaskFilters({
                           key={option.value}
                           onClick={() => toggleStatus(option.value)}
                           className={cn(
-                            "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-all",
+                            "flex cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-all",
                             isSelected
-                              ? "border-white/20 bg-white/10 text-white"
-                              : "border-white/[0.08] bg-transparent text-white/40 hover:border-white/20 hover:text-white/60"
+                              ? "border-primary/30 bg-primary/10 text-foreground"
+                              : "border-border bg-transparent text-muted-foreground hover:border-border/80 hover:text-foreground"
                           )}
                         >
                           <Icon className={cn("h-3 w-3", isSelected && option.color)} />
@@ -203,10 +203,10 @@ export function TaskFilters({
                 {/* Priority Filter */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-white/70">Priority</span>
+                    <span className="text-sm font-medium text-foreground/70">Priority</span>
                     <button
                       onClick={() => onPriorityFilterChange(["LOW", "MEDIUM", "HIGH", "URGENT"])}
-                      className="text-xs text-white/40 hover:text-white/60"
+                      className="cursor-pointer text-xs text-muted-foreground hover:text-foreground"
                     >
                       Select all
                     </button>
@@ -220,10 +220,10 @@ export function TaskFilters({
                           key={option.value}
                           onClick={() => togglePriority(option.value)}
                           className={cn(
-                            "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-all",
+                            "flex cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-all",
                             isSelected
-                              ? "border-white/20 bg-white/10 text-white"
-                              : "border-white/[0.08] bg-transparent text-white/40 hover:border-white/20 hover:text-white/60"
+                              ? "border-primary/30 bg-primary/10 text-foreground"
+                              : "border-border bg-transparent text-muted-foreground hover:border-border/80 hover:text-foreground"
                           )}
                         >
                           <Icon className={cn("h-3 w-3", isSelected && option.color)} />
@@ -240,7 +240,7 @@ export function TaskFilters({
                     variant="ghost"
                     size="sm"
                     onClick={clearFilters}
-                    className="w-full text-white/60 hover:bg-white/[0.06] hover:text-white"
+                    className="w-full cursor-pointer text-muted-foreground hover:bg-muted hover:text-foreground"
                   >
                     <X className="mr-2 h-3.5 w-3.5" />
                     Clear all filters
@@ -256,7 +256,7 @@ export function TaskFilters({
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2 border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04]"
+                className="cursor-pointer gap-2 border-border bg-muted/50 hover:bg-muted"
               >
                 <ArrowUpDown className="h-4 w-4" />
                 <span className="hidden sm:inline">Sort</span>
@@ -265,17 +265,17 @@ export function TaskFilters({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-48 border-white/[0.08] bg-black/95 backdrop-blur-xl"
+              className="w-48 border-border bg-popover backdrop-blur-xl"
             >
-              <DropdownMenuLabel className="text-white/50">Sort by</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-white/[0.08]" />
+              <DropdownMenuLabel className="text-muted-foreground">Sort by</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-border" />
               {sortOptions.map((option) => (
                 <DropdownMenuItem
                   key={option.value}
                   onClick={() => onSortChange(option.value)}
                   className={cn(
-                    "cursor-pointer focus:bg-white/[0.08]",
-                    sortBy === option.value && "bg-white/[0.05] text-violet-400"
+                    "cursor-pointer focus:bg-muted",
+                    sortBy === option.value && "bg-primary/10 text-violet-600 dark:text-violet-400"
                   )}
                 >
                   {option.label}
@@ -295,17 +295,17 @@ export function TaskFilters({
             exit={{ opacity: 0, height: 0 }}
             className="flex flex-wrap items-center gap-2"
           >
-            <span className="text-xs text-white/40">Active filters:</span>
+            <span className="text-xs text-muted-foreground">Active filters:</span>
 
             {searchQuery && (
               <Badge
                 variant="secondary"
-                className="gap-1 bg-white/[0.06] text-white/70 hover:bg-white/[0.1]"
+                className="gap-1 bg-muted text-foreground/70 hover:bg-muted/80"
               >
                 Search: {searchQuery}
                 <button
                   onClick={() => onSearchChange("")}
-                  className="ml-1 rounded-full hover:bg-white/20"
+                  className="ml-1 cursor-pointer rounded-full hover:bg-muted-foreground/20"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -319,12 +319,12 @@ export function TaskFilters({
                   <Badge
                     key={status}
                     variant="secondary"
-                    className="gap-1 bg-white/[0.06] text-white/70 hover:bg-white/[0.1]"
+                    className="gap-1 bg-muted text-foreground/70 hover:bg-muted/80"
                   >
                     {option?.label}
                     <button
                       onClick={() => toggleStatus(status)}
-                      className="ml-1 rounded-full hover:bg-white/20"
+                      className="ml-1 cursor-pointer rounded-full hover:bg-muted-foreground/20"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -339,12 +339,12 @@ export function TaskFilters({
                   <Badge
                     key={priority}
                     variant="secondary"
-                    className="gap-1 bg-white/[0.06] text-white/70 hover:bg-white/[0.1]"
+                    className="gap-1 bg-muted text-foreground/70 hover:bg-muted/80"
                   >
                     {option?.label}
                     <button
                       onClick={() => togglePriority(priority)}
-                      className="ml-1 rounded-full hover:bg-white/20"
+                      className="ml-1 cursor-pointer rounded-full hover:bg-muted-foreground/20"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -354,7 +354,7 @@ export function TaskFilters({
 
             <button
               onClick={clearFilters}
-              className="text-xs text-white/40 hover:text-white/60"
+              className="cursor-pointer text-xs text-muted-foreground hover:text-foreground"
             >
               Clear all
             </button>

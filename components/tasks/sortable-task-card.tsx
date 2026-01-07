@@ -10,6 +10,7 @@ interface SortableTaskCardProps {
   onToggleComplete: (id: string) => void
   onEdit: (task: Task) => void
   onDelete: (id: string) => void
+  onClick?: (task: Task) => void
 }
 
 export function SortableTaskCard({
@@ -17,6 +18,7 @@ export function SortableTaskCard({
   onToggleComplete,
   onEdit,
   onDelete,
+  onClick,
 }: SortableTaskCardProps) {
   const {
     attributes,
@@ -46,6 +48,7 @@ export function SortableTaskCard({
         onToggleComplete={onToggleComplete}
         onEdit={onEdit}
         onDelete={onDelete}
+        {...(onClick && { onClick })}
         isDragging={isDragging}
         dragHandleProps={{ ...attributes, ...listeners }}
       />
