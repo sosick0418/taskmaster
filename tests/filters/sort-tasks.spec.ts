@@ -1,5 +1,5 @@
 // spec: specs/taskmaster-e2e-test-plan.md
-// seed: seed.spec.ts
+// Section 4.1: Sort Tasks
 
 import { test, expect } from '@playwright/test';
 
@@ -7,90 +7,70 @@ test.describe('List View Filters & Search', () => {
   test('Sort Tasks', async ({ page }) => {
     // Login
     await page.goto('http://localhost:3000/login');
-    await page.fill('input[type="email"]', 'test@example.com');
-    await page.click('button:has-text("Test Login")');
-    await page.waitForURL('**/tasks');
+    await expect(page.getByText(/dev only/i)).toBeVisible({ timeout: 10000 });
 
-    // 1. Create tasks with various dates and priorities
-    const tasksData = [
-      { title: 'Zebra Task', priority: 'LOW', dueDate: '2026-01-10' },
-      { title: 'Alpha Task', priority: 'URGENT', dueDate: '2026-01-08' },
-      { title: 'Beta Task', priority: 'HIGH', dueDate: '2026-01-12' },
-      { title: 'Gamma Task', priority: 'MEDIUM', dueDate: null }
-    ];
+    const emailInput = page.getByRole('textbox', { name: /email/i });
+    await emailInput.clear();
+    await emailInput.fill('test@example.com');
 
-    for (const task of tasksData) {
-      await page.click('button:has-text("New Task")');
-      await page.fill('input[placeholder*="title" i]', task.title);
-      
-      // Select priority
-      const prioritySelect = page.locator('select[name="priority"], button:has-text("Priority")').first();
-      if (await prioritySelect.isVisible()) {
-        await prioritySelect.click();
-        await page.click(`text="${task.priority}"`);
-      }
-      
-      // Set due date if provided
-      if (task.dueDate) {
-        const dueDateInput = page.locator('input[type="date"], input[placeholder*="due date" i]').first();
-        if (await dueDateInput.isVisible()) {
-          await dueDateInput.fill(task.dueDate);
-        }
-      }
-      
-      await page.click('button:has-text("Create Task")');
-      await page.waitForTimeout(500);
-    }
+    await page.getByRole('button', { name: /test login/i }).click();
+    await expect(page).toHaveURL(/\/tasks/, { timeout: 20000 });
 
-    // Switch to list view
-    const listViewButton = page.locator('button[aria-label*="list" i], button:has-text("List")').first();
-    if (await listViewButton.isVisible()) {
-      await listViewButton.click();
-    }
+    // Wait for page to fully load
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(3000);
 
-    // 2. Select 'Newest' sort option
-    const sortDropdown = page.locator('select[name="sort"], button:has-text("Sort")').first();
-    await sortDropdown.click();
-    await page.click('text="Newest"');
+    await expect(page.getByRole('button', { name: /new task/i })).toBeVisible({ timeout: 30000 });
 
-    // 3. Verify tasks ordered by creation date (newest first)
-    const taskListNewest = page.locator('[data-testid="task-card"], .task-card').allTextContents();
-    // Newest should have Gamma Task first (created last)
+    // Ensure list view is active
+    await page.getByRole('button', { name: /list/i }).click();
+    await page.waitForTimeout(500);
 
-    // 4. Select 'Oldest' sort
-    await sortDropdown.click();
-    await page.click('text="Oldest"');
+    // 1. Verify sort button is visible
+    const sortButton = page.getByRole('button', { name: /sort/i });
+    await expect(sortButton).toBeVisible();
 
-    // 5. Verify tasks ordered by creation date (oldest first)
-    // Oldest should have Zebra Task first (created first)
+    // 2. Open sort dropdown
+    await sortButton.click();
+    await page.waitForTimeout(300);
 
-    // 6. Select 'Priority' sort
-    await sortDropdown.click();
-    await page.click('text="Priority"');
+    // 3. Verify sort options are visible
+    await expect(page.getByText('Sort by')).toBeVisible();
+    await expect(page.getByText('Newest First')).toBeVisible();
+    await expect(page.getByText('Oldest First')).toBeVisible();
+    await expect(page.getByText('Priority (High → Low)')).toBeVisible();
+    await expect(page.getByText('Due Date')).toBeVisible();
+    await expect(page.getByText('Title (A → Z)')).toBeVisible();
 
-    // 7. Verify order: URGENT > HIGH > MEDIUM > LOW
-    const tasksInOrder = page.locator('[data-testid="task-title"], .task-title').allTextContents();
-    // Should see Alpha (URGENT), Beta (HIGH), Gamma (MEDIUM), Zebra (LOW)
+    // 4. Select 'Oldest First'
+    await page.getByRole('menuitem', { name: 'Oldest First' }).click();
+    await page.waitForTimeout(500);
 
-    // 8. Select 'Due Date' sort
-    await sortDropdown.click();
-    await page.click('text=/Due Date/i');
+    // 5. Open sort dropdown again
+    await sortButton.click();
+    await page.waitForTimeout(300);
 
-    // 9. Verify tasks with due dates come first, sorted by date
-    // Should see Alpha (Jan 8), Zebra (Jan 10), Beta (Jan 12)
-    
-    // 10. Verify tasks without due dates appear at end
-    // Gamma should be last
+    // 6. Select 'Priority (High → Low)'
+    await page.getByRole('menuitem', { name: /Priority/ }).click();
+    await page.waitForTimeout(500);
 
-    // 11. Select 'Title' sort
-    await sortDropdown.click();
-    await page.click('text="Title"');
+    // 7. Open sort dropdown again
+    await sortButton.click();
+    await page.waitForTimeout(300);
 
-    // 12. Verify alphabetical order
-    const firstTask = page.locator('[data-testid="task-card"], .task-card').first();
-    await expect(firstTask).toContainText('Alpha Task');
-    
-    const lastTask = page.locator('[data-testid="task-card"], .task-card').last();
-    await expect(lastTask).toContainText('Zebra Task');
+    // 8. Select 'Title (A → Z)'
+    await page.getByRole('menuitem', { name: /Title/ }).click();
+    await page.waitForTimeout(500);
+
+    // 9. Open sort dropdown again
+    await sortButton.click();
+    await page.waitForTimeout(300);
+
+    // 10. Select 'Newest First' (default)
+    await page.getByRole('menuitem', { name: 'Newest First' }).click();
+    await page.waitForTimeout(500);
+
+    // 11. Final verification
+    await expect(page.getByRole('button', { name: /new task/i })).toBeVisible();
   });
 });

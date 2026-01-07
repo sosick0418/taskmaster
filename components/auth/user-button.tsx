@@ -27,7 +27,7 @@ export function UserButton() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="relative h-9 w-9 cursor-pointer rounded-full ring-2 ring-border transition-all hover:ring-primary/30 focus:outline-none focus:ring-primary/50">
+        <button data-testid="user-button" className="relative h-9 w-9 cursor-pointer rounded-full ring-2 ring-border transition-all hover:ring-primary/30 focus:outline-none focus:ring-primary/50">
           <Avatar className="h-9 w-9">
             <AvatarImage src={session.user.image ?? undefined} alt={session.user.name ?? "User"} />
             <AvatarFallback className="bg-gradient-to-br from-violet-500 to-cyan-500 text-white">

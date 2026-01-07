@@ -7,89 +7,97 @@ test.describe('Task CRUD Operations', () => {
   test('Edit Task', async ({ page }) => {
     // 1. Login and create a task 'Review code'
     await page.goto('http://localhost:3000/login');
-    await page.fill('input[type="email"]', 'test@example.com');
-    await page.click('button:has-text("Test Login")');
-    await page.waitForURL('**/tasks');
-    
+    await expect(page.getByText(/dev only/i)).toBeVisible({ timeout: 10000 });
+
+    const emailInput = page.getByRole('textbox', { name: /email/i });
+    await emailInput.clear();
+    await emailInput.fill('test@example.com');
+
+    await page.getByRole('button', { name: /test login/i }).click();
+    await expect(page).toHaveURL(/\/tasks/, { timeout: 20000 });
+
+    // Wait for the New Task button to appear (indicates page is loaded)
+    const newTaskButton = page.getByRole('button', { name: /new task/i });
+    await expect(newTaskButton).toBeVisible({ timeout: 15000 });
+
     // Create the task
-    await page.click('button:has-text("New Task")');
+    await newTaskButton.click();
     await page.waitForTimeout(500);
-    
-    const titleInput = page.locator('input[name="title"], input[placeholder*="title" i]').first();
+
+    const dialog = page.locator('[role="dialog"]');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+
+    const titleInput = dialog.locator('#title');
     await titleInput.fill('Review code');
-    
-    // Set to MEDIUM priority initially
-    const priorityButton = page.locator('button:has-text("Priority"), [role="combobox"]:has-text("Priority")').first();
-    if (await priorityButton.isVisible().catch(() => false)) {
-      await priorityButton.click();
-      await page.waitForTimeout(300);
-      await page.locator('text="Medium"').first().click();
-    }
-    
-    await page.click('button:has-text("Create Task")');
+
+    // Set to MEDIUM priority (already default)
+    await dialog.getByRole('button', { name: /create task/i }).click();
+
+    // Wait for page to reload after task creation
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(1000);
-    
-    // 2. Click edit button (pencil icon) on the task card
-    const editButton = page.locator('text="Review code"').locator('..').locator('..').locator('button[aria-label*="edit" i], button:has([class*="pencil" i])').first();
-    if (await editButton.isVisible().catch(() => false)) {
-      await editButton.click();
-    } else {
-      // Alternative: click on the task to open detail modal, then find edit button
-      await page.click('text="Review code"');
-      await page.waitForTimeout(500);
-      await page.click('button:has-text("Edit"), button[aria-label*="edit" i]');
-    }
+
+    // 2. Click on task to open detail modal
+    await page.getByText('Review code').first().click();
     await page.waitForTimeout(500);
-    
-    // 3. Verify form opens with existing task data pre-filled
-    await expect(page.locator('input[value="Review code"]')).toBeVisible();
-    
-    // 4. Change title to 'Review PR #123'
-    const editTitleInput = page.locator('input[name="title"], input[placeholder*="title" i]').first();
+
+    // 3. Click Edit button in the detail modal
+    const detailDialog = page.locator('[role="dialog"]');
+    await expect(detailDialog).toBeVisible();
+    await detailDialog.getByRole('button', { name: /edit/i }).click();
+    await page.waitForTimeout(500);
+
+    // 4. Verify form opens with existing task data pre-filled
+    const editDialog = page.locator('[role="dialog"]');
+    await expect(editDialog).toBeVisible();
+
+    // 5. Change title to 'Review PR #123'
+    const editTitleInput = editDialog.locator('#title');
     await editTitleInput.clear();
     await editTitleInput.fill('Review PR #123');
-    
-    // 5. Change priority from MEDIUM to URGENT
-    const editPriorityButton = page.locator('button:has-text("Priority"), button:has-text("Medium"), [role="combobox"]').first();
-    if (await editPriorityButton.isVisible().catch(() => false)) {
-      await editPriorityButton.click();
+
+    // 6. Change priority from MEDIUM to URGENT
+    const priorityTrigger = editDialog.locator('button').filter({ hasText: /medium/i }).first();
+    if (await priorityTrigger.isVisible().catch(() => false)) {
+      await priorityTrigger.click();
       await page.waitForTimeout(300);
-      await page.locator('text="Urgent"').first().click();
+      await page.getByRole('option', { name: /urgent/i }).click();
     }
-    
-    // 6. Add tag 'code-review'
-    const tagInput = page.locator('input[placeholder*="tag" i]').first();
+
+    // 7. Add tag 'code-review'
+    const tagInput = editDialog.getByPlaceholder(/add a tag/i);
     if (await tagInput.isVisible().catch(() => false)) {
       await tagInput.fill('code-review');
       await page.keyboard.press('Enter');
       await page.waitForTimeout(200);
     }
-    
-    // 7. Click 'Update Task' button
-    await page.click('button:has-text("Update"), button:has-text("Save")');
-    
-    // 8. Verify success toast 'Task updated successfully'
-    await expect(page.locator('text=/task updated|updated successfully/i')).toBeVisible({ timeout: 5000 });
-    
-    // 9. Verify task card updates immediately (optimistic)
+
+    // 8. Click 'Update Task' button
+    await editDialog.getByRole('button', { name: /update task/i }).click();
+
+    // 9. Wait for update and page reload
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(1000);
-    await expect(page.locator('text="Review PR #123"')).toBeVisible();
-    
-    // 10. Refresh page and verify changes persisted
+
+    // 10. Verify task card updates immediately (optimistic)
+    await expect(page.getByText('Review PR #123').first()).toBeVisible({ timeout: 5000 });
+
+    // 11. Refresh page and verify changes persisted
     await page.reload();
-    await page.waitForTimeout(1000);
-    await expect(page.locator('text="Review PR #123"')).toBeVisible();
-    
-    // 11. Click task to open detail modal
-    await page.click('text="Review PR #123"');
+    await expect(page.getByRole('button', { name: /new task/i })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Review PR #123').first()).toBeVisible();
+
+    // 12. Click task to open detail modal
+    await page.getByText('Review PR #123').first().click();
     await page.waitForTimeout(500);
-    
-    // 12. Verify all changes are reflected in detail view
-    await expect(page.locator('text="Review PR #123"')).toBeVisible();
-    await expect(page.locator('text=/urgent/i')).toBeVisible();
-    
+
+    // 13. Verify all changes are reflected in detail view
+    const verifyDialog = page.locator('[role="dialog"]');
+    await expect(verifyDialog.getByText('Review PR #123').first()).toBeVisible();
+    await expect(verifyDialog.getByText(/urgent/i)).toBeVisible();
+
     // Verify tag if visible
-    const codeReviewTag = page.locator('text="code-review"');
+    const codeReviewTag = verifyDialog.getByText('code-review');
     if (await codeReviewTag.isVisible().catch(() => false)) {
       await expect(codeReviewTag).toBeVisible();
     }

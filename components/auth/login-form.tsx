@@ -111,6 +111,7 @@ export function LoginForm() {
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}
                   className="border-white/10 bg-white/5 text-white placeholder:text-white/40"
+                  aria-label="Email"
                 />
                 <Button
                   variant="outline"

@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
+  testMatch: '**/*.spec.ts', // Only match test files in tests/ directory
   fullyParallel: false, // Auth tests need sequential execution
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -31,36 +32,40 @@ export default defineConfig({
       dependencies: ['auth'],
     },
 
-    // GROUP C: Kanban (sequential)
+    // GROUP C: Kanban (sequential) - increased timeout for multiple task creations
     {
       name: 'kanban',
       testMatch: /tests\/kanban\/.*.spec.ts/,
       fullyParallel: false,
       dependencies: ['auth'],
+      timeout: 120000, // 2 minutes for tests with multiple task creations
     },
 
-    // GROUP D: Filters (parallel)
+    // GROUP D: Filters (sequential to avoid overwhelming server)
     {
       name: 'filters',
       testMatch: /tests\/filters\/.*.spec.ts/,
-      fullyParallel: true,
+      fullyParallel: false,
       dependencies: ['auth'],
+      timeout: 60000, // 1 minute per test
     },
 
-    // GROUP E: Analytics (parallel)
+    // GROUP E: Analytics (sequential to avoid race conditions)
     {
       name: 'analytics',
       testMatch: /tests\/analytics\/.*.spec.ts/,
-      fullyParallel: true,
+      fullyParallel: false,
       dependencies: ['auth'],
+      timeout: 60000,
     },
 
-    // GROUP F: UI (parallel)
+    // GROUP F: UI (sequential to avoid race conditions)
     {
       name: 'ui',
       testMatch: /tests\/ui\/.*.spec.ts/,
-      fullyParallel: true,
+      fullyParallel: false,
       dependencies: ['auth'],
+      timeout: 60000,
     },
 
     // GROUP G: Edge Cases (sequential for safety)

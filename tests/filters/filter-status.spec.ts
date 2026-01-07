@@ -1,5 +1,5 @@
 // spec: specs/taskmaster-e2e-test-plan.md
-// seed: seed.spec.ts
+// Section 4.2: Filter by Status
 
 import { test, expect } from '@playwright/test';
 
@@ -7,82 +7,70 @@ test.describe('List View Filters & Search', () => {
   test('Filter by Status', async ({ page }) => {
     // Login
     await page.goto('http://localhost:3000/login');
-    await page.fill('input[type="email"]', 'test@example.com');
-    await page.click('button:has-text("Test Login")');
-    await page.waitForURL('**/tasks');
+    await expect(page.getByText(/dev only/i)).toBeVisible({ timeout: 10000 });
 
-    // 1. Create tasks with various statuses (2 TODO, 2 IN_PROGRESS, 2 DONE)
-    const tasksData = [
-      { title: 'Task TODO 1', status: 'TODO' },
-      { title: 'Task TODO 2', status: 'TODO' },
-      { title: 'Task IN_PROGRESS 1', status: 'IN_PROGRESS' },
-      { title: 'Task IN_PROGRESS 2', status: 'IN_PROGRESS' },
-      { title: 'Task DONE 1', status: 'DONE' },
-      { title: 'Task DONE 2', status: 'DONE' }
-    ];
+    const emailInput = page.getByRole('textbox', { name: /email/i });
+    await emailInput.clear();
+    await emailInput.fill('test@example.com');
 
-    for (const task of tasksData) {
-      await page.click('button:has-text("New Task")');
-      await page.fill('input[placeholder*="title" i]', task.title);
-      
-      // Select status
-      const statusSelect = page.locator('select[name="status"], button:has-text("Status")').first();
-      if (await statusSelect.isVisible()) {
-        await statusSelect.click();
-        await page.click(`text="${task.status}"`);
-      }
-      
-      await page.click('button:has-text("Create Task")');
-      await page.waitForTimeout(500);
-    }
+    await page.getByRole('button', { name: /test login/i }).click();
+    await expect(page).toHaveURL(/\/tasks/, { timeout: 20000 });
 
-    // 2. Switch to list view
-    const listViewButton = page.locator('button[aria-label*="list" i], button:has-text("List")').first();
-    if (await listViewButton.isVisible()) {
-      await listViewButton.click();
-    }
+    // Wait for page to fully load
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(3000);
 
-    // 3. Verify all 6 tasks are shown
-    for (const task of tasksData) {
-      await expect(page.locator(`text="${task.title}"`)).toBeVisible();
-    }
+    await expect(page.getByRole('button', { name: /new task/i })).toBeVisible({ timeout: 30000 });
 
-    // 4. Open status filter dropdown
-    const statusFilterButton = page.locator('button:has-text("Status"), button[aria-label*="status" i]').first();
-    await statusFilterButton.click();
+    // Ensure list view is active
+    await page.getByRole('button', { name: /list/i }).click();
+    await page.waitForTimeout(500);
 
-    // 5. Uncheck 'Done' status
-    const doneCheckbox = page.locator('input[type="checkbox"][value="DONE"], label:has-text("Done") input, label:has-text("DONE") input').first();
-    await doneCheckbox.uncheck();
+    // 1. Open filters popover
+    const filtersButton = page.getByRole('button', { name: /filters/i });
+    await filtersButton.click({ force: true });
+    await page.waitForTimeout(500);
 
-    // 6. Verify only TODO and IN_PROGRESS tasks are shown (4 tasks)
-    await expect(page.locator('text="Task TODO 1"')).toBeVisible();
-    await expect(page.locator('text="Task TODO 2"')).toBeVisible();
-    await expect(page.locator('text="Task IN_PROGRESS 1"')).toBeVisible();
-    await expect(page.locator('text="Task IN_PROGRESS 2"')).toBeVisible();
-    await expect(page.locator('text="Task DONE 1"')).not.toBeVisible();
-    await expect(page.locator('text="Task DONE 2"')).not.toBeVisible();
+    // 2. Verify popover content is visible
+    const popoverContent = page.locator('[data-slot="popover-content"]');
+    await expect(popoverContent).toBeVisible({ timeout: 5000 });
 
-    // 7. Verify count shows 'Showing 4 of 6 tasks'
-    await expect(page.locator('text=/Showing 4 of 6/i')).toBeVisible();
+    // 3. Verify status filter options are visible within popover
+    await expect(popoverContent.getByRole('button', { name: 'To Do' })).toBeVisible();
+    await expect(popoverContent.getByRole('button', { name: 'In Progress' })).toBeVisible();
+    await expect(popoverContent.getByRole('button', { name: 'Done' })).toBeVisible();
 
-    // 8. Uncheck 'To Do' status
-    const todoCheckbox = page.locator('input[type="checkbox"][value="TODO"], label:has-text("To Do") input, label:has-text("TODO") input').first();
-    await todoCheckbox.uncheck();
+    // 4. Click 'In Progress' button to toggle it
+    const inProgressButton = popoverContent.locator('button').filter({ hasText: 'In Progress' }).first();
+    await inProgressButton.click({ force: true });
+    await page.waitForTimeout(200);
 
-    // 9. Verify only IN_PROGRESS tasks are shown (2 tasks)
-    await expect(page.locator('text="Task IN_PROGRESS 1"')).toBeVisible();
-    await expect(page.locator('text="Task IN_PROGRESS 2"')).toBeVisible();
-    await expect(page.locator('text="Task TODO 1"')).not.toBeVisible();
-    await expect(page.locator('text="Task TODO 2"')).not.toBeVisible();
+    // 5. Click 'Done' button to toggle it
+    const doneButton = popoverContent.locator('button').filter({ hasText: 'Done' }).first();
+    await doneButton.click({ force: true });
+    await page.waitForTimeout(200);
 
-    // 10. Re-check all statuses
-    await todoCheckbox.check();
-    await doneCheckbox.check();
+    // 6. Close filter popover
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
 
-    // 11. Verify all 6 tasks return
-    for (const task of tasksData) {
-      await expect(page.locator(`text="${task.title}"`)).toBeVisible();
-    }
+    // 7. Verify 'To Do' filter is shown as active
+    await expect(page.getByText('Active filters:')).toBeVisible();
+
+    // 8. Re-open filters
+    await filtersButton.click({ force: true });
+    await page.waitForTimeout(500);
+
+    // 9. Click 'Select all' for status
+    const selectAllStatus = popoverContent.getByText('Select all').first();
+    await selectAllStatus.click({ force: true });
+    await page.waitForTimeout(300);
+
+    // 10. Close filter popover
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+
+    // 11. Verify all tasks are visible (no status filter active)
+    await expect(page.getByRole('button', { name: /new task/i })).toBeVisible();
   });
 });

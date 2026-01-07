@@ -74,6 +74,9 @@ vi.mock("framer-motion", async () => {
       span: ({ children, ...props }: React.HTMLAttributes<HTMLSpanElement>) => (
         <span {...props}>{children}</span>
       ),
+      p: ({ children, ...props }: React.HTMLAttributes<HTMLParagraphElement>) => (
+        <p {...props}>{children}</p>
+      ),
       aside: ({ children, ...props }: React.HTMLAttributes<HTMLElement>) => (
         <aside {...props}>{children}</aside>
       ),

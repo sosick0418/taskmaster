@@ -8,8 +8,8 @@ test.describe('Authentication & Session Management', () => {
     // 1. Navigate to http://localhost:3000
     await page.goto('http://localhost:3000');
 
-    // 2. Verify landing page loads with hero section and 'Taskmaster' heading
-    await expect(page.getByRole('heading', { name: /taskmaster/i })).toBeVisible();
+    // 2. Verify landing page loads with hero section and 'Master Your Tasks' heading
+    await expect(page.getByRole('heading', { name: /master your tasks/i })).toBeVisible();
 
     // 3. Verify 'Sign in' link is visible in header
     await expect(page.getByRole('link', { name: /sign in/i })).toBeVisible();
