@@ -43,5 +43,5 @@ next-env.d.ts
 # playwright
 .playwright-mcp/
 .claude/
-
+CLAUDE.md
 /app/generated/prisma

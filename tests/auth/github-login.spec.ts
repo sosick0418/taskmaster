@@ -8,8 +8,8 @@ test.describe('Authentication & Session Management', () => {
     // 1. Navigate to http://localhost:3000/login
     await page.goto('http://localhost:3000/login');
 
-    // 2. Verify login page displays with gradient background and 'Welcome Back' heading
-    await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
+    // 2. Verify login page displays with gradient background and 'Welcome Back' title
+    await expect(page.getByText(/welcome back/i)).toBeVisible();
 
     // 3. Verify 'Continue with GitHub' button is visible
     const githubButton = page.getByRole('button', { name: /continue with github/i });

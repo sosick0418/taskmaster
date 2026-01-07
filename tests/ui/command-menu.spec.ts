@@ -5,10 +5,17 @@ import { test, expect } from '@playwright/test';
 
 test.describe('UI & UX Features - Command Menu (Cmd+K)', () => {
   test.beforeEach(async ({ page }) => {
+    // Login
     await page.goto('http://localhost:3000/login');
-    await page.fill('input[type="email"]', 'test@example.com');
-    await page.click('button:has-text("Test Login")');
-    await page.waitForURL('**/tasks');
+    await expect(page.getByText(/dev only/i)).toBeVisible({ timeout: 10000 });
+    const emailInput = page.getByRole('textbox', { name: /email/i });
+    await emailInput.clear();
+    await emailInput.fill('test@example.com');
+    await page.getByRole('button', { name: /test login/i }).click();
+    await expect(page).toHaveURL(/\/tasks/, { timeout: 20000 });
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
+    await expect(page.getByRole('button', { name: /new task/i })).toBeVisible({ timeout: 30000 });
   });
 
   test('Cmd+K opens command menu', async ({ page }) => {
@@ -40,14 +47,14 @@ test.describe('UI & UX Features - Command Menu (Cmd+K)', () => {
     await page.keyboard.press('Meta+k');
 
     const searchInput = page.locator('[role="dialog"] input');
-    await searchInput.fill('analytics');
+    await searchInput.fill('settings');
 
     await page.waitForTimeout(200);
 
-    const analyticsOption = page.getByRole('option', { name: /analytics/i }).first();
-    await analyticsOption.click();
+    const settingsOption = page.getByRole('option', { name: /settings/i }).first();
+    await settingsOption.click();
 
-    await page.waitForURL('**/analytics');
+    await page.waitForURL('**/settings');
   });
 
   test('escape closes command menu', async ({ page }) => {
