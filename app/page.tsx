@@ -70,51 +70,42 @@ const itemVariants = {
   },
 }
 
+const gradientOrbs = [
+  {
+    animate: { scale: [1, 1.2, 1], x: [0, 50, 0], y: [0, 30, 0] },
+    duration: 20,
+    className: "absolute top-1/4 left-1/4 h-[500px] w-[500px] rounded-full bg-violet-600/30 blur-[120px]",
+  },
+  {
+    animate: { scale: [1, 1.3, 1], x: [0, -30, 0], y: [0, 50, 0] },
+    duration: 25,
+    className: "absolute top-1/2 right-1/4 h-[400px] w-[400px] rounded-full bg-cyan-600/30 blur-[120px]",
+  },
+  {
+    animate: { scale: [1, 1.1, 1], x: [0, 40, 0], y: [0, -40, 0] },
+    duration: 18,
+    className: "absolute bottom-1/4 left-1/2 h-[350px] w-[350px] rounded-full bg-fuchsia-600/20 blur-[120px]",
+  },
+]
+
 export default function LandingPage() {
   return (
     <div className="relative min-h-screen bg-black text-white overflow-hidden">
       {/* Animated background */}
       <div className="fixed inset-0 -z-10">
         {/* Gradient orbs */}
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            x: [0, 50, 0],
-            y: [0, 30, 0],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-          className="absolute top-1/4 left-1/4 h-[500px] w-[500px] rounded-full bg-violet-600/30 blur-[120px]"
-        />
-        <motion.div
-          animate={{
-            scale: [1, 1.3, 1],
-            x: [0, -30, 0],
-            y: [0, 50, 0],
-          }}
-          transition={{
-            duration: 25,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-          className="absolute top-1/2 right-1/4 h-[400px] w-[400px] rounded-full bg-cyan-600/30 blur-[120px]"
-        />
-        <motion.div
-          animate={{
-            scale: [1, 1.1, 1],
-            x: [0, 40, 0],
-            y: [0, -40, 0],
-          }}
-          transition={{
-            duration: 18,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-          className="absolute bottom-1/4 left-1/2 h-[350px] w-[350px] rounded-full bg-fuchsia-600/20 blur-[120px]"
-        />
+        {gradientOrbs.map((orb, index) => (
+          <motion.div
+            key={index}
+            animate={orb.animate}
+            transition={{
+              duration: orb.duration,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+            className={orb.className}
+          />
+        ))}
 
         {/* Grid pattern */}
         <div className="absolute inset-0 grid-pattern opacity-30" />
@@ -267,7 +258,7 @@ export default function LandingPage() {
             viewport={{ once: true }}
             className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
           >
-            {features.map((feature, index) => (
+            {features.map((feature) => (
               <motion.div
                 key={feature.title}
                 variants={itemVariants}

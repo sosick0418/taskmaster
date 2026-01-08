@@ -268,11 +268,13 @@ export async function checkDueDateReminders(): Promise<ActionResult<number>> {
 
       const reminderDays = prefs.reminderDaysBefore
 
+      const MS_PER_DAY = 1000 * 60 * 60 * 24
+
       for (const task of user.tasks) {
         if (!task.dueDate) continue
 
         const daysUntilDue = Math.ceil(
-          (task.dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+          (task.dueDate.getTime() - now.getTime()) / MS_PER_DAY
         )
 
         // Check if task is due within the reminder period
@@ -284,7 +286,7 @@ export async function checkDueDateReminders(): Promise<ActionResult<number>> {
               taskId: task.id,
               type: "DUE_DATE_REMINDER",
               createdAt: {
-                gte: new Date(now.getTime() - 24 * 60 * 60 * 1000), // Within last 24 hours
+                gte: new Date(now.getTime() - MS_PER_DAY),
               },
             },
           })
@@ -309,7 +311,7 @@ export async function checkDueDateReminders(): Promise<ActionResult<number>> {
               taskId: task.id,
               type: "TASK_OVERDUE",
               createdAt: {
-                gte: new Date(now.getTime() - 24 * 60 * 60 * 1000),
+                gte: new Date(now.getTime() - MS_PER_DAY),
               },
             },
           })

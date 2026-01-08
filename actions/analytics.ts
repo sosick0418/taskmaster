@@ -339,6 +339,11 @@ async function getActivityHeatmap(userId: string, now: Date): Promise<ActivityDa
   // Find max for level calculation
   const maxCount = Math.max(...Array.from(completionsByDay.values()), 1)
 
+  // Level thresholds for activity heatmap
+  const LEVEL_THRESHOLD_LOW = 0.25
+  const LEVEL_THRESHOLD_MEDIUM = 0.5
+  const LEVEL_THRESHOLD_HIGH = 0.75
+
   return days.map((day) => {
     const dateKey = format(day, "yyyy-MM-dd")
     const count = completionsByDay.get(dateKey) ?? 0
@@ -347,9 +352,9 @@ async function getActivityHeatmap(userId: string, now: Date): Promise<ActivityDa
     let level: 0 | 1 | 2 | 3 | 4 = 0
     if (count > 0) {
       const ratio = count / maxCount
-      if (ratio <= 0.25) level = 1
-      else if (ratio <= 0.5) level = 2
-      else if (ratio <= 0.75) level = 3
+      if (ratio <= LEVEL_THRESHOLD_LOW) level = 1
+      else if (ratio <= LEVEL_THRESHOLD_MEDIUM) level = 2
+      else if (ratio <= LEVEL_THRESHOLD_HIGH) level = 3
       else level = 4
     }
 
@@ -461,12 +466,8 @@ async function getProductivityStats(userId: string, now: Date): Promise<Producti
 
   // Most productive day of week (including subtasks)
   const dayCount: Record<string, number> = {}
-  tasks.forEach((t) => {
-    const day = format(t.updatedAt, "EEEE")
-    dayCount[day] = (dayCount[day] ?? 0) + 1
-  })
-  subtasksForStreak.forEach((s) => {
-    const day = format(s.updatedAt, "EEEE")
+  ;[...tasks, ...subtasksForStreak].forEach((item) => {
+    const day = format(item.updatedAt, "EEEE")
     dayCount[day] = (dayCount[day] ?? 0) + 1
   })
 
