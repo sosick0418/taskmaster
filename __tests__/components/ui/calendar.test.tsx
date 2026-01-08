@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
 import { Calendar, CalendarDayButton } from "@/components/ui/calendar"
+import { CalendarDay } from "react-day-picker"
 
 // Mock lucide-react icons
 vi.mock("lucide-react", () => ({
@@ -179,9 +180,13 @@ describe("Calendar", () => {
     it("allows custom Root component override", () => {
       const CustomRoot = ({
         children,
+        rootRef,
         ...props
-      }: React.PropsWithChildren<Record<string, unknown>>) => (
-        <div data-testid="custom-root" {...props}>
+      }: React.PropsWithChildren<{
+        rootRef?: React.Ref<HTMLDivElement>
+      }> &
+        React.HTMLAttributes<HTMLDivElement>) => (
+        <div data-testid="custom-root" ref={rootRef} {...props}>
           {children}
         </div>
       )
@@ -365,10 +370,10 @@ describe("Calendar", () => {
 })
 
 describe("CalendarDayButton", () => {
-  const mockDay = {
-    date: new Date(2024, 0, 15),
-    displayMonth: new Date(2024, 0, 1),
-  }
+  const mockDay = new CalendarDay(
+    new Date(2024, 0, 15),
+    new Date(2024, 0, 1)
+  )
 
   const defaultModifiers = {
     disabled: false,
