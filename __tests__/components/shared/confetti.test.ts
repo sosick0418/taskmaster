@@ -103,14 +103,14 @@ describe("celebrateTaskComplete", () => {
   it("uses purple/cyan color palette", () => {
     celebrateTaskComplete()
     const call = mockConfetti.mock.calls[0]
-    expect((call[0] as { colors?: string[] })?.colors).toEqual(
+    expect((call![0] as { colors?: string[] })?.colors).toEqual(
       expect.arrayContaining(["#a855f7", "#06b6d4"])
-    )
+    );
   })
 
   it("fires from vertical position 0.7", () => {
     celebrateTaskComplete()
     const call = mockConfetti.mock.calls[0]
-    expect((call[0] as { origin?: { y: number } })?.origin?.y).toBe(0.7)
+    expect((call![0] as { origin?: { y: number } })?.origin?.y).toBe(0.7);
   })
 })

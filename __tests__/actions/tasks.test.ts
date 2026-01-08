@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 
 // Valid UUIDs for testing
 const VALID_USER_ID = "123e4567-e89b-12d3-a456-426614174001"
-const OTHER_USER_ID = "123e4567-e89b-12d3-a456-426614174099"
 const VALID_TASK_ID = "123e4567-e89b-12d3-a456-426614174000"
 const VALID_TASK_ID_2 = "223e4567-e89b-12d3-a456-426614174002"
 const VALID_TASK_ID_3 = "323e4567-e89b-12d3-a456-426614174003"

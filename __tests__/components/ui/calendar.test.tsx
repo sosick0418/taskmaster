@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen, fireEvent, within } from "@testing-library/react"
+import { render, screen, fireEvent } from "@testing-library/react"
 import { Calendar, CalendarDayButton } from "@/components/ui/calendar"
-import { type DayButton } from "react-day-picker"
 
 // Mock lucide-react icons
 vi.mock("lucide-react", () => ({
