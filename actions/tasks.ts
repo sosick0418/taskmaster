@@ -150,6 +150,7 @@ export async function createTask(
         status: validated.status,
         priority: validated.priority,
         dueDate: validated.dueDate ?? null,
+        isCompleted: validated.status === "DONE",
         order: (highestOrder?.order ?? -1) + 1,
         userId: user.id,
         ...(validated.tags.length > 0 && {
@@ -193,6 +194,7 @@ export async function updateTask(
     }
 
     const { id, tags, dueDate, title, description, status, priority, isCompleted } = validated
+    const nextIsCompleted = isCompleted ?? (status !== undefined ? status === "DONE" : undefined)
 
     const task = await prisma.task.update({
       where: { id },
@@ -201,7 +203,7 @@ export async function updateTask(
         ...(description !== undefined && { description: description ?? null }),
         ...(status !== undefined && { status }),
         ...(priority !== undefined && { priority }),
-        ...(isCompleted !== undefined && { isCompleted }),
+        ...(nextIsCompleted !== undefined && { isCompleted: nextIsCompleted }),
         ...(dueDate !== undefined && { dueDate: dueDate ?? null }),
         ...(tags && {
           tags: {

@@ -154,36 +154,75 @@ export function TaskListView({ initialTasks, stats, userName }: TaskListViewProp
   const handleCreateOrUpdate = async (data: TaskFormData) => {
     const { id: taskId, ...restData } = data
     if (taskId) {
-      // Update
-      const result = await updateTask({ id: taskId, ...restData })
+      const previousTasks = tasks
+      const previousSelected = selectedTask
+      const existingTask = tasks.find((t) => t.id === taskId)
+
+      if (existingTask) {
+        const updatedTask: Task = {
+          ...existingTask,
+          title: restData.title,
+          description: restData.description ?? null,
+          status: restData.status,
+          priority: restData.priority,
+          dueDate: restData.dueDate ?? null,
+          isCompleted: restData.status === "DONE",
+          tags: restData.tags.map((name, index) => {
+            const existingTag = existingTask.tags.find((tag) => tag.name === name)
+            return { id: existingTag?.id ?? index, name }
+          }),
+          updatedAt: new Date(),
+        }
+
+        setTasks((prev) => prev.map((t) => (t.id === taskId ? updatedTask : t)))
+        setSelectedTask((prev) => (prev?.id === taskId ? updatedTask : prev))
+      }
+
+      const result = await updateTask({
+        id: taskId,
+        ...restData,
+        isCompleted: restData.status === "DONE",
+      })
       if (result.success) {
-        setTasks((prev) =>
-          prev.map((t) =>
-            t.id === taskId
-              ? {
-                  ...t,
-                  title: restData.title,
-                  description: restData.description ?? null,
-                  status: restData.status,
-                  priority: restData.priority,
-                  dueDate: restData.dueDate ?? null,
-                  tags: restData.tags.map((name, i) => ({ id: i, name })),
-                }
-              : t
-          )
-        )
         toast.success("Task updated successfully")
       } else {
+        setTasks(previousTasks)
+        setSelectedTask(previousSelected)
         toast.error(result.error)
       }
     } else {
-      // Create
+      const tempId = `temp-${Date.now()}-${Math.random().toString(16).slice(2)}`
+      const createdAt = new Date()
+      const nextOrder =
+        tasks
+          .filter((task) => task.status === restData.status)
+          .reduce((max, task) => Math.max(max, task.order), -1) + 1
+
+      const optimisticTask: Task = {
+        id: tempId,
+        title: restData.title,
+        description: restData.description ?? null,
+        status: restData.status,
+        priority: restData.priority,
+        dueDate: restData.dueDate ?? null,
+        isCompleted: restData.status === "DONE",
+        order: nextOrder,
+        tags: restData.tags.map((name, index) => ({ id: index, name })),
+        subtasks: [],
+        createdAt,
+        updatedAt: createdAt,
+      }
+
+      setTasks((prev) => [...prev, optimisticTask])
+
       const result = await createTask(restData)
       if (result.success) {
-        // Refetch tasks to get the new one with proper ID
-        window.location.reload()
+        setTasks((prev) =>
+          prev.map((task) => (task.id === tempId ? { ...task, id: result.data.id } : task))
+        )
         toast.success("Task created successfully")
       } else {
+        setTasks((prev) => prev.filter((task) => task.id !== tempId))
         toast.error(result.error)
       }
     }

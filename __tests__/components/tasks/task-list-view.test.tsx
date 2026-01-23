@@ -655,8 +655,6 @@ describe("TaskListView 컴포넌트", () => {
       await waitFor(() => {
         expect(toast.success).toHaveBeenCalledWith("Task created successfully")
       })
-
-      expect(mockReload).toHaveBeenCalled()
     })
 
     it("태스크 생성 실패 시 에러 토스트를 표시한다", async () => {

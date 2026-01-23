@@ -5,7 +5,6 @@ import { motion } from "framer-motion"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
 import { MobileNav } from "@/components/layout/mobile-nav"
-import { CommandMenu } from "@/components/layout/command-menu"
 import { useSidebar } from "@/hooks/use-sidebar"
 
 export default function DashboardLayout({
@@ -14,7 +13,6 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const { isCollapsed, toggle, isLoaded: sidebarLoaded } = useSidebar()
-  const [commandOpen, setCommandOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -65,7 +63,7 @@ export default function DashboardLayout({
 
         {/* Desktop header */}
         <div className="hidden md:block">
-          <Header onSearchOpen={() => setCommandOpen(true)} />
+          <Header />
         </div>
 
         {/* Page content */}
@@ -81,8 +79,6 @@ export default function DashboardLayout({
         </main>
       </div>
 
-      {/* Command menu */}
-      <CommandMenu open={commandOpen} onOpenChange={setCommandOpen} />
     </div>
   )
 }
